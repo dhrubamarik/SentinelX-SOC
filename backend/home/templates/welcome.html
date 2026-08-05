@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <title>SentinelX SOC | Dashboard</title>
+</head>
+
+<body class="bg-zinc-900 min-h-screen flex flex-col">
+    {% include "message.html" %}
+    {% include "navbar.html" %}
+
+    <div class="px-10 py-10 border-b border-zinc-800 bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <p class="text-emerald-400 text-xs font-semibold tracking-widest uppercase">System Online</p>
+        </div>
+        <h1 class="text-4xl font-bold tracking-tight">
+            <span class="text-zinc-400 font-normal">Welcome back,</span>
+            <span class="text-cyan-400">{{ request.user.username }}</span>
+        </h1>
+        <p class="text-zinc-500 text-sm mt-2 max-w-lg">
+            Your Security Operations Center is actively monitoring authentication events across the platform.
+        </p>
+    </div>
+
+    <div class="container mx-auto px-6 mt-10 flex-1 w-full">
+
+        {% block content %}
+
+        {% endblock %}
+
+    </div>
+
+    <footer class="bg-zinc-950 text-zinc-600 text-xs text-center p-5 mt-10 border-t border-zinc-800">
+        SentinelX SOC &nbsp;•&nbsp; Defensive Monitoring Platform &nbsp;•&nbsp; © Dhruba 2026
+    </footer>
+
+</body>
+
+</html>

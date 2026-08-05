@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+</head>
+
+<body>
+    <div class="w-full h-screen bg-zinc-900 flex items-center justify-center p-10">
+        <div class="w-full max-w-md">
+            {% include "message.html" %}
+            <div class="bg-zinc-800/50 border border-zinc-800 rounded-2xl p-8 shadow-xl">
+                <h1 class="text-3xl tracking-tight font-bold mb-6 text-white">Create User</h1>
+                <form class="text-white flex flex-col gap-4" method="post" action="{% url 'register' %}" id="registerForm">
+                    {% csrf_token %}
+
+                    <input
+                        class="px-4 py-3 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors"
+                        type="text" placeholder="username" name="username">
+
+                    <input
+                        class="px-4 py-3 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors"
+                        type="email" placeholder="email" name="email">
+
+                    <div class="relative">
+                        <input id="id_password"
+                            class="w-full px-4 py-3 pr-12 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors"
+                            type="password" placeholder="password" name="password"
+                            pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
+                            title="Min 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special symbol">
+                        <button type="button" id="togglePassword"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors">
+                            <!-- eye (show) icon -->
+                            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <!-- eye-off (hide) icon -->
+                            <svg id="eyeOffIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20"
+                                height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a21.8 21.8 0 015.06-6.06M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a21.79 21.79 0 01-3.22 4.53M14.12 14.12a3 3 0 11-4.24-4.24">
+                                </path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- live requirement checklist -->
+                    <ul id="passwordRules" class="text-sm space-y-1 -mt-2 px-1">
+                        <li id="rule-length" class="text-zinc-500 flex items-center gap-2">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> At least 8 characters
+                        </li>
+                        <li id="rule-upper" class="text-zinc-500 flex items-center gap-2">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> One uppercase letter
+                        </li>
+                        <li id="rule-lower" class="text-zinc-500 flex items-center gap-2">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> One lowercase letter
+                        </li>
+                        <li id="rule-number" class="text-zinc-500 flex items-center gap-2">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> One number
+                        </li>
+                        <li id="rule-special" class="text-zinc-500 flex items-center gap-2">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> One special symbol
+                        </li>
+                    </ul>
+
+                    <input class="mt-2 px-5 py-3 outline-none bg-blue-500 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors font-medium"
+                        type="submit" value="Register">
+                </form>
+
+                <p class="text-zinc-500 text-sm text-center mt-6">
+                    Already have an account?
+                    <a href="{% url 'login' %}" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                        Log In
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('id_password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const eyeOffIcon = document.getElementById('eyeOffIcon');
+        const registerForm = document.getElementById('registerForm');
+
+        togglePassword.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            eyeIcon.classList.toggle('hidden', isPassword);
+            eyeOffIcon.classList.toggle('hidden', !isPassword);
+        });
+
+        const rules = {
+            length: { test: v => v.length >= 8, el: document.getElementById('rule-length') },
+            upper: { test: v => /[A-Z]/.test(v), el: document.getElementById('rule-upper') },
+            lower: { test: v => /[a-z]/.test(v), el: document.getElementById('rule-lower') },
+            number: { test: v => /\d/.test(v), el: document.getElementById('rule-number') },
+            special: { test: v => /[^A-Za-z0-9]/.test(v), el: document.getElementById('rule-special') },
+        };
+
+        function validatePassword() {
+            const value = passwordInput.value;
+            let allValid = true;
+
+            for (const key in rules) {
+                const { test, el } = rules[key];
+                const dot = el.querySelector('.dot');
+                const passed = test(value);
+                if (!passed) allValid = false;
+
+                el.classList.toggle('text-green-400', passed);
+                el.classList.toggle('text-zinc-500', !passed);
+                dot.classList.toggle('bg-green-400', passed);
+                dot.classList.toggle('bg-zinc-600', !passed);
+            }
+            return allValid;
+        }
+
+        passwordInput.addEventListener('input', validatePassword);
+
+        registerForm.addEventListener('submit', (e) => {
+            if (!validatePassword()) {
+                e.preventDefault();
+                passwordInput.classList.add('border-red-500');
+            }
+        });
+    </script>
+</body>
+
+</html>

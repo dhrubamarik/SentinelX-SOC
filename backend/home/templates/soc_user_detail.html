@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SentinelX SOC - User Dossier: {{ target_user.username }}</title>
+    
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+    <header class="border-b border-slate-800 bg-slate-900 px-6 py-3.5 flex justify-between items-center">
+        <h1 class="text-sm font-bold uppercase tracking-wider text-white">
+            User Dossier: <span class="text-emerald-400 font-mono">{{ target_user.username }}</span>
+        </h1>
+        <a href="/soc/users/" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+            &larr; Back to User Directory
+        </a>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <span class="text-xs font-bold text-slate-400 uppercase">Successful Logins</span>
+                <div class="text-3xl font-extrabold text-emerald-400 mt-1">{{ total_logins }}</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <span class="text-xs font-bold text-slate-400 uppercase">Failed Attempts</span>
+                <div class="text-3xl font-extrabold text-red-500 mt-1">{{ failed_logins }}</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <span class="text-xs font-bold text-slate-400 uppercase">Registered Email</span>
+                <div class="text-sm font-mono text-white mt-2">{{ target_user.email|default:"Not Provided" }}</div>
+            </div>
+        </div>
+
+        <!-- Individual Location History Map -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-blue-400"></i> Location History Trace
+            </h2>
+            <div id="user-map" class="w-full h-64 rounded-lg bg-slate-950 border border-slate-800"></div>
+        </div>
+
+        <!-- Detailed Extracted Telemetry Log -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-database text-purple-400"></i> Extracted Login Telemetry History
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-mono">
+                        <tr>
+                            <th class="p-3">Event</th>
+                            <th class="p-3">IP / Location</th>
+                            <th class="p-3">OS / Browser</th>
+                            <th class="p-3">VPN / TOR Status</th>
+                            <th class="p-3">Risk Level</th>
+                            <th class="p-3 text-right">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 font-mono">
+                        {% for ev in events %}
+                            <tr class="hover:bg-slate-800/50">
+                                <td class="p-3 font-bold {% if ev.event_type == 'LOGIN_SUCCESS' %}text-emerald-400{% else %}text-red-400{% endif %}">
+                                    {{ ev.event_type }}
+                                </td>
+                                <td class="p-3">
+                                    {{ ev.ip_address }}
+                                    <span class="block text-[10px] text-slate-500">{{ ev.city }}, {{ ev.country }}</span>
+                                </td>
+                                <td class="p-3">
+                                    {{ ev.operating_system }}
+                                    <span class="block text-[10px] text-slate-500">{{ ev.browser }}</span>
+                                </td>
+                                <td class="p-3">
+                                    {% if ev.is_vpn %}<span class="text-indigo-400 font-bold">VPN</span>{% endif %}
+                                    {% if ev.is_tor %}<span class="text-emerald-400 font-bold ml-1">TOR</span>{% endif %}
+                                    {% if not ev.is_vpn and not ev.is_tor %}<span class="text-slate-500">Direct Connection</span>{% endif %}
+                                </td>
+                                <td class="p-3">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold 
+                                        {% if ev.risk_level == 'HIGH' or ev.risk_level == 'CRITICAL' %}bg-red-950 text-red-400 border border-red-800{% else %}bg-slate-800 text-slate-300{% endif %}">
+                                        {{ ev.risk_score }} ({{ ev.risk_level }})
+                                    </span>
+                                </td>
+                                <td class="p-3 text-right text-slate-400">{{ ev.created_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="p-4 text-center text-slate-500">No telemetry recorded for this user.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const locations = {{ location_history|safe }};
+        if (locations.length > 0) {
+            const first = locations[0];
+            const map = L.map('user-map').setView([first.latitude, first.longitude], 4);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+            locations.forEach(loc => {
+                L.circleMarker([loc.latitude, loc.longitude], {
+                    radius: 7,
+                    fillColor: '#3b82f6',
+                    color: '#60a5fa',
+                    weight: 1,
+                    fillOpacity: 0.8
+                }).addTo(map).bindPopup(`
+                    <div style="color:#0f172a; font-size:11px;">
+                        <b>IP:</b> ${loc.ip_address}<br/>
+                        <b>Location:</b> ${loc.city}, ${loc.country}<br/>
+                        <b>Time:</b> ${loc.created_at}
+                    </div>
+                `);
+            });
+        } else {
+            document.getElementById('user-map').innerHTML = '<div class="flex items-center justify-center h-full text-xs text-slate-500">No map coordinates logged for this user.</div>';
+        }
+    </script>
+</body>
+</html>

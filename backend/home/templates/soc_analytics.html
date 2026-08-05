@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX SOC - Analytics Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-slate-950 text-white min-h-screen font-sans">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900 px-6 py-3.5 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-chart-line text-blue-400 text-xl"></i>
+            <h1 class="text-sm font-bold uppercase tracking-wider text-white">Security Telemetry Analytics</h1>
+        </div>
+        <a href="/soc/dashboard/"
+            class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+            &larr; Back to Dashboard
+        </a>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Chart 1: Login Trend -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-arrow-trend-up text-emerald-400"></i> Daily Auth Event Volume
+            </h2>
+            <div class="relative h-64">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Risk Distribution -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-amber-400"></i> Event Risk Severity Breakdown
+            </h2>
+            <div class="relative h-64 flex justify-center">
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 3: Top Browsers -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-compass text-cyan-400"></i> Client Agent Distribution
+            </h2>
+            <div class="relative h-64">
+                <canvas id="browserChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 4: Top Countries -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-globe text-purple-400"></i> Top Origin Geographic Regions
+            </h2>
+            <div class="relative h-64">
+                <canvas id="countryChart"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Fetch & Render Charts -->
+    <script>
+        fetch('/soc/analytics-data/')
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                console.log("Analytics API Response:", data);
+
+                // 1. Daily Volume (Trend Chart)
+                const trendCtx = document.getElementById('trendChart');
+                if (trendCtx && data.daily_volume) {
+                    new Chart(trendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.daily_volume.labels || [],
+                            datasets: [{
+                                label: 'Events',
+                                data: data.daily_volume.data || [],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+
+                // 2. Risk Severity Breakdown (Doughnut Chart)
+                const riskCtx = document.getElementById('riskChart');
+                if (riskCtx && data.risk_breakdown) {
+                    new Chart(riskCtx, {
+                        type: 'doughnut',
+                        data: {
+                            // Fixed labels order matching your backend list [LOW, MEDIUM, HIGH, CRITICAL]
+                            labels: ['Low', 'Medium', 'High', 'Critical'],
+                            datasets: [{
+                                data: data.risk_breakdown || [],
+                                backgroundColor: ['#22c55e', '#f59e0b', '#f97316', '#ef4444']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+
+                // 3. Operating System / Agent Distribution (Bar Chart)
+                const browserCtx = document.getElementById('browserChart');
+                if (browserCtx && data.agent_distribution) {
+                    new Chart(browserCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.agent_distribution.labels || [],
+                            datasets: [{
+                                label: 'Sessions',
+                                data: data.agent_distribution.data || [],
+                                backgroundColor: '#06b6d4'
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+
+                // 4. Origin Geographic Regions (Horizontal Bar Chart)
+                const countryCtx = document.getElementById('countryChart');
+                if (countryCtx && data.geo_regions) {
+                    new Chart(countryCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.geo_regions.labels || [],
+                            datasets: [{
+                                label: 'Requests',
+                                data: data.geo_regions.data || [],
+                                backgroundColor: '#a855f7'
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching or rendering analytics chart data:', error);
+            });
+    </script>
+</body>
+
+</html>

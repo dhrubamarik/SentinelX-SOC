@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SentinelX SOC - Live Threat Map</title>
+    
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col font-sans">
+
+    <!-- Top Bar -->
+    <header class="border-b border-slate-800 bg-slate-900 px-6 py-3 flex justify-between items-center">
+        <h1 class="text-sm font-bold uppercase tracking-wider text-red-500 flex items-center gap-2">
+            <i class="fa-solid fa-earth-americas"></i> Global Threat Map
+        </h1>
+        <a href="/soc/dashboard/" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+            &larr; Back to Dashboard
+        </a>
+    </header>
+
+    <!-- Map Container -->
+    <div id="map" class="flex-1 w-full h-[calc(100vh-53px)]"></div>
+
+    <script>
+    const map = L.map('map').setView([20, 0], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 19
+    }).addTo(map);
+
+    function getMarkerColor(level) {
+        if (level === 'CRITICAL' || level === 'HIGH') return '#ef4444';
+        if (level === 'MEDIUM') return '#f97316';
+        return '#22c55e';
+    }
+
+    fetch('/soc/map-data/')
+        .then(res => res.json())
+        .then(data => {
+            data.locations.forEach(loc => {
+                const color = getMarkerColor(loc.risk_level);
+                
+                const circle = L.circleMarker([loc.lat, loc.lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: color,
+                    weight: 2,
+                    opacity: 0.9,
+                    fillOpacity: 0.6
+                }).addTo(map);
+
+                // Permanent Label showing Username directly next to dot
+                circle.bindTooltip(`<b>${loc.username}</b>`, {
+                    permanent: true, 
+                    direction: 'right',
+                    className: 'bg-slate-900/90 text-white border border-slate-700 text-xs px-2 py-0.5 rounded shadow'
+                });
+
+                // Detailed popup on click
+                circle.bindPopup(`
+                    <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; min-width: 160px;">
+                        <strong style="color: ${color};">${loc.event_type}</strong><br/>
+                        <b>User:</b> ${loc.username}<br/>
+                        <b>IP:</b> ${loc.ip}<br/>
+                        <b>Location:</b> ${loc.city}, ${loc.country}<br/>
+                        <b>Risk:</b> ${loc.risk_score} (${loc.risk_level})<br/>
+                        <small style="color: #64748b;">${loc.time}</small><br/><br/>
+                        <a href="/soc/users/${loc.username}/" style="color: #2563eb; font-weight: bold; text-decoration: underline;">
+                            View Full User Dossier &rarr;
+                        </a>
+                    </div>
+                `);
+            });
+        });
+</script>
+</body>
+</html>
