@@ -1,7 +1,0 @@
-Django>=5.0
-gunicorn
-django-user-agents
-whitenoise
-python-dotenv
-dj-database-url
-psycopg2-binary
