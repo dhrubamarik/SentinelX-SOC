@@ -113,3 +113,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # SOC Passkey
 SOC_PASSKEY = os.getenv('SOC_PASSKEY', 'admin@123')
+
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True
