@@ -17,20 +17,29 @@ def evaluate_and_generate_alerts(event):
     """
     alerts_created = []
 
+    # Safely extract rule names out of the reasons list of dicts
+    # Handles both flat string lists and dictionary structures cleanly
+    reason_strings = []
+    if event.risk_reasons:
+        for r in event.risk_reasons:
+            if isinstance(r, dict):
+                reason_strings.append(r.get("rule", "UNKNOWN"))
+            else:
+                reason_strings.append(str(r))
+
     # Rule 1: High / Critical Risk Score Alert
     if event.risk_level in ['HIGH', 'CRITICAL']:
         alert = create_alert(
             event=event,
             title=f"High Risk Authentication Detected ({event.risk_score}/100)",
-            description=f"User {event.user} logged in with risk score {event.risk_score}. Reasons: {', '.join(event.risk_reasons or [])}",
+            description=f"User {event.user} logged in with risk score {event.risk_score}. Reasons: {', '.join(reason_strings)}",
             severity=event.risk_level
         )
         alerts_created.append(alert)
 
     # Rule 2: Brute Force / Repeated Failures
     if event.event_type == 'LOGIN_FAILED':
-        # If there are 3+ recent failed attempts
-        failed_reasons = [r for r in (event.risk_reasons or []) if 'FAILED' in r or 'BRUTE' in r]
+        failed_reasons = [r for r in reason_strings if 'FAILED' in r or 'BRUTE' in r]
         if failed_reasons or event.risk_score >= 30:
             alert = create_alert(
                 event=event,

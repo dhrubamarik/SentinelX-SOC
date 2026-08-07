@@ -1,12 +1,16 @@
 from datetime import timedelta
 from django.utils import timezone
-from .models import SecurityEvent
+
+# Crucial Fix: We do NOT import analyze_security_event from here!
+# We also do a local import inside functions if models.py imports this file, 
+# preventing circular dependency crashes.
 
 def check_new_device(user, device_fingerprint, current_event_id=None):
     """Returns True if this device fingerprint has never been seen for this user prior to this event."""
-    if not device_fingerprint:
+    if not user or not device_fingerprint:
         return False
-    
+        
+    from .models import SecurityEvent
     query = SecurityEvent.objects.filter(user=user, device_fingerprint=device_fingerprint)
     if current_event_id:
         query = query.exclude(id=current_event_id)
@@ -16,9 +20,10 @@ def check_new_device(user, device_fingerprint, current_event_id=None):
 
 def check_new_browser(user, browser, current_event_id=None):
     """Returns True if this browser has never been seen for this user prior to this event."""
-    if not browser or browser == "Unknown":
+    if not user or not browser or browser == "Unknown":
         return False
         
+    from .models import SecurityEvent    
     query = SecurityEvent.objects.filter(user=user, browser=browser)
     if current_event_id:
         query = query.exclude(id=current_event_id)
@@ -28,9 +33,10 @@ def check_new_browser(user, browser, current_event_id=None):
 
 def check_new_country(user, country, current_event_id=None):
     """Returns True if this country has never been seen for this user prior to this event."""
-    if not country or country in ["Unknown", "Development / Localhost"]:
+    if not user or not country or country in ["Unknown", "Development / Localhost"]:
         return False
         
+    from .models import SecurityEvent    
     query = SecurityEvent.objects.filter(user=user, country=country)
     if current_event_id:
         query = query.exclude(id=current_event_id)
@@ -42,6 +48,8 @@ def check_failed_logins(user, minutes=10):
     """Counts failed logins for the user within the last X minutes."""
     if not user:
         return 0
+        
+    from .models import SecurityEvent
     time_threshold = timezone.now() - timedelta(minutes=minutes)
     return SecurityEvent.objects.filter(
         user=user, 
@@ -67,8 +75,6 @@ def check_tor(ip_address):
     return False
 
 
-# threat_engine.py
-
 def analyze_security_event(event):
     """
     Main Threat Engine Entry Point.
@@ -85,5 +91,5 @@ def analyze_security_event(event):
         "unusual_time": check_unusual_login_time(event.created_at),
         "vpn": check_vpn(event.ip_address) if hasattr(event, 'is_vpn') is False else event.is_vpn,
         "tor": check_tor(event.ip_address) if hasattr(event, 'is_tor') is False else event.is_tor,
-        "event_type": event.event_type  # Pass event_type so the LOGIN_FAILED check triggers!
+        "event_type": event.event_type  
     }
