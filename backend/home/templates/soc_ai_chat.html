@@ -58,19 +58,6 @@
             cursor: none !important;
         }
 
-        body {
-            background:
-                radial-gradient(ellipse 900px 500px at 10% -10%, rgba(16, 185, 129, 0.10) 0%, transparent 55%),
-                radial-gradient(ellipse 700px 500px at 100% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 55%);
-            background-color: #020617;
-            background-attachment: fixed;
-        }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #020617; }
-        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.55); }
-
         #mouse-follow-overlay {
             position: fixed;
             inset: 0;
@@ -109,117 +96,6 @@
                 display: none;
             }
         }
-
-        /* ---------- Stylish additions (visual only) ---------- */
-
-        @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(14px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .anim-in {
-            animation: fadeSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
-            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        .live-dot { animation: pulse-ring 1.8s infinite; }
-
-        /* Bot avatar icon hover */
-        .bot-avatar {
-            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
-        }
-        .bot-avatar:hover {
-            transform: scale(1.08) rotate(-4deg);
-            box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
-        }
-
-        /* Back-to-dashboard link hover */
-        .back-link {
-            transition: transform 0.2s ease, color 0.2s ease;
-        }
-        .back-link:hover {
-            transform: translateX(-3px);
-        }
-
-        /* Terminate button hover */
-        .terminate-btn {
-            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .terminate-btn:hover {
-            transform: translateY(-1px);
-            border-color: rgba(16, 185, 129, 0.5);
-            box-shadow: 0 6px 16px -8px rgba(16, 185, 129, 0.5);
-        }
-
-        /* Quick action chips */
-        .quick-chip {
-            transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
-        }
-        .quick-chip:hover {
-            transform: translateY(-2px);
-            border-color: rgba(16, 185, 129, 0.45);
-            box-shadow: 0 8px 18px -10px rgba(16, 185, 129, 0.45);
-        }
-        .quick-chip:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        /* Chat panel glow border */
-        .chat-panel {
-            position: relative;
-            overflow: hidden;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .chat-panel::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(16,185,129,0), rgba(16,185,129,0.35), rgba(16,185,129,0));
-            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            pointer-events: none;
-        }
-        .chat-panel:focus-within::before,
-        .chat-panel:hover::before {
-            opacity: 1;
-        }
-
-        /* Input area lift */
-        .input-panel {
-            transition: border-color 0.25s ease, box-shadow 0.25s ease;
-        }
-        .input-panel:focus-within {
-            border-color: rgba(16, 185, 129, 0.45);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
-        }
-
-        /* Send button hover */
-        #send-btn {
-            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        #send-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 22px -10px rgba(16, 185, 129, 0.6);
-        }
-        #send-btn:active:not(:disabled) {
-            transform: translateY(0) scale(0.97);
-        }
-
-        /* Chat bubbles subtle hover lift */
-        #chat-messages > div .max-w-\[85\%\] > div {
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-        }
-        #chat-messages > div .max-w-\[85\%\] > div:hover {
-            transform: translateY(-1px);
-        }
     </style>
 </head>
 
@@ -228,20 +104,17 @@
     <!-- Top Navigation Bar -->
     <nav class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
         <div class="flex items-center space-x-4">
-            <a href="/soc/dashboard/" class="back-link text-slate-400 hover:text-white">
+            <a href="/soc/dashboard/" class="text-slate-400 hover:text-white transition">
                 <i class="fa-solid fa-arrow-left mr-2"></i> Back to Dashboard
             </a>
             <div class="flex items-center space-x-3">
-                <span class="bot-avatar p-2 bg-emerald-600/20 border border-emerald-500/40 rounded-lg text-emerald-500">
+                <span class="p-2 bg-emerald-600/20 border border-emerald-500/40 rounded-lg text-emerald-500">
                     <i class="fa-solid fa-robot text-xl"></i>
                 </span>
                 <div>
                     <h1 class="text-lg font-bold tracking-wider text-white flex items-center gap-2">
                         AI Security <span class="text-emerald-500">Analyst</span>
-                        <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 live-dot"></span>
-                            Online
-                        </span>
+                        <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Online</span>
                     </h1>
                 </div>
             </div>
@@ -251,7 +124,7 @@
             <span class="text-xs text-slate-400 font-mono">
                 Operator: <span class="text-emerald-400 font-bold">{{ request.user.username }}</span>
             </span>
-            <a href="{% url 'logout' %}" class="terminate-btn text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded">
+            <a href="{% url 'logout' %}" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded transition">
                 <i class="fa-solid fa-right-from-bracket mr-1"></i> Terminate
             </a>
         </div>
@@ -261,29 +134,29 @@
     <main class="max-w-5xl mx-auto px-4 py-6 h-[calc(100vh-80px)] flex flex-col">
 
         <!-- Quick Actions -->
-        <div class="anim-in mb-4 flex flex-wrap gap-2" style="animation-delay: 0.02s;">
-            <button onclick="sendQuickQuestion('How many login attempts failed today?')" class="quick-chip px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300">
+        <div class="mb-4 flex flex-wrap gap-2">
+            <button onclick="sendQuickQuestion('How many login attempts failed today?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
                 <i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i> Failed Logins Today
             </button>
-            <button onclick="sendQuickQuestion('Which user has the most failed logins?')" class="quick-chip px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300">
+            <button onclick="sendQuickQuestion('Which user has the most failed logins?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
                 <i class="fa-solid fa-users text-blue-400 mr-1"></i> User Risk Analysis
             </button>
-            <button onclick="sendQuickQuestion('What is the most common operating system?')" class="quick-chip px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300">
+            <button onclick="sendQuickQuestion('What is the most common operating system?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
                 <i class="fa-solid fa-desktop text-cyan-400 mr-1"></i> OS Statistics
             </button>
-            <button onclick="sendQuickQuestion('How many VPN and TOR detections?')" class="quick-chip px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300">
+            <button onclick="sendQuickQuestion('How many VPN and TOR detections?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
                 <i class="fa-solid fa-network-wired text-indigo-400 mr-1"></i> VPN/TOR Stats
             </button>
-            <button onclick="sendQuickQuestion('Show me high risk events count')" class="quick-chip px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300">
+            <button onclick="sendQuickQuestion('Show me high risk events count')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
                 <i class="fa-solid fa-fire text-orange-400 mr-1"></i> High Risk Events
             </button>
         </div>
 
         <!-- Chat Messages Area -->
-        <div id="chat-messages" class="chat-panel anim-in flex-1 overflow-y-auto space-y-4 p-4 bg-slate-900/50 border border-slate-800 rounded-xl mb-4 scrollbar-hide" style="animation-delay: 0.08s;">
+        <div id="chat-messages" class="flex-1 overflow-y-auto space-y-4 p-4 bg-slate-900/50 border border-slate-800 rounded-xl mb-4 scrollbar-hide">
             <!-- Welcome Message -->
             <div class="message-enter flex items-start gap-3">
-                <div class="bot-avatar w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center flex-shrink-0 shadow-lg">
                     <i class="fa-solid fa-robot text-white text-lg"></i>
                 </div>
                 <div class="max-w-[85%]">
@@ -306,7 +179,7 @@
         </div>
 
         <!-- Input Area -->
-        <div class="input-panel anim-in bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg" style="animation-delay: 0.14s;">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
             <form id="chat-form" class="flex gap-3">
                 <div class="flex-1 relative">
                     <div class="smooth-caret-wrap">
@@ -317,7 +190,7 @@
                     </div>
                     <i class="fa-solid fa-shield-halved text-slate-500 absolute right-3 top-1/2 -translate-y-1/2"></i>
                 </div>
-                <button type="submit" id="send-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-6 py-3 flex items-center gap-2 font-semibold shadow-lg shadow-emerald-900/30">
+                <button type="submit" id="send-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-6 py-3 transition flex items-center gap-2 font-semibold shadow-lg shadow-emerald-900/30">
                     <i class="fa-solid fa-paper-plane"></i>
                     <span class="hidden sm:inline">Send</span>
                 </button>
