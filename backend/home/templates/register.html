@@ -52,12 +52,29 @@
                 <form class="text-white flex flex-col gap-4" method="post" action="{% url 'register' %}" id="registerForm">
                     {% csrf_token %}
 
-                    <div class="smooth-caret-wrap">
-                        <input
-                            class="smooth-caret-input px-4 py-3 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors w-full"
-                            type="text" placeholder="username" name="username">
-                        <span class="smooth-caret-measure"></span>
-                        <div class="smooth-caret-bar"></div>
+                    <div>
+                        <div class="smooth-caret-wrap">
+                            <input id="id_username"
+                                class="smooth-caret-input px-4 py-3 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors w-full"
+                                type="text" placeholder="e.g. Raj, Rohit" name="username"
+                                pattern="[A-Z][a-zA-Z]{2,}"
+                                title="Start with a capital letter, letters only, at least 3 characters (e.g. Raj, Rohit)">
+                            <span class="smooth-caret-measure"></span>
+                            <div class="smooth-caret-bar"></div>
+                        </div>
+
+                        <!-- live username format checklist -->
+                        <ul id="usernameRules" class="text-sm space-y-1 mt-2 px-1">
+                            <li id="rule-uname-start" class="text-zinc-500 flex items-center gap-2">
+                                <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> Starts with a capital letter (e.g. Raj)
+                            </li>
+                            <li id="rule-uname-letters" class="text-zinc-500 flex items-center gap-2">
+                                <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> Letters only, no numbers or symbols
+                            </li>
+                            <li id="rule-uname-length" class="text-zinc-500 flex items-center gap-2">
+                                <span class="dot w-1.5 h-1.5 rounded-full bg-zinc-600"></span> At least 3 characters
+                            </li>
+                        </ul>
                     </div>
 
                     <div class="smooth-caret-wrap">
@@ -135,6 +152,7 @@
     <script>
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('id_password');
+        const usernameInput = document.getElementById('id_username');
         const eyeIcon = document.getElementById('eyeIcon');
         const eyeOffIcon = document.getElementById('eyeOffIcon');
         const registerForm = document.getElementById('registerForm');
@@ -145,6 +163,33 @@
             eyeIcon.classList.toggle('hidden', isPassword);
             eyeOffIcon.classList.toggle('hidden', !isPassword);
         });
+
+        // --- Username live format checklist ---
+        const usernameRules = {
+            start: { test: v => /^[A-Z]/.test(v), el: document.getElementById('rule-uname-start') },
+            letters: { test: v => /^[A-Za-z]*$/.test(v), el: document.getElementById('rule-uname-letters') },
+            length: { test: v => v.length >= 3, el: document.getElementById('rule-uname-length') },
+        };
+
+        function validateUsername() {
+            const value = usernameInput.value;
+            let allValid = true;
+
+            for (const key in usernameRules) {
+                const { test, el } = usernameRules[key];
+                const dot = el.querySelector('.dot');
+                const passed = value.length > 0 ? test(value) : false;
+                if (!passed) allValid = false;
+
+                el.classList.toggle('text-green-400', passed);
+                el.classList.toggle('text-zinc-500', !passed);
+                dot.classList.toggle('bg-green-400', passed);
+                dot.classList.toggle('bg-zinc-600', !passed);
+            }
+            return allValid;
+        }
+
+        usernameInput.addEventListener('input', validateUsername);
 
         const rules = {
             length: { test: v => v.length >= 8, el: document.getElementById('rule-length') },
@@ -175,7 +220,13 @@
         passwordInput.addEventListener('input', validatePassword);
 
         registerForm.addEventListener('submit', (e) => {
-            if (!validatePassword()) {
+            const usernameValid = validateUsername();
+            const passwordValid = validatePassword();
+            if (!usernameValid) {
+                e.preventDefault();
+                usernameInput.classList.add('border-red-500');
+            }
+            if (!passwordValid) {
                 e.preventDefault();
                 passwordInput.classList.add('border-red-500');
             }
