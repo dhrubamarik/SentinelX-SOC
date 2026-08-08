@@ -35,6 +35,10 @@ urlpatterns = [
     path('soc/analytics-data/', views.soc_analytics_data, name='soc_analytics_data'),
     path('soc/users/', views.user_directory_view, name='user_directory_view'),
     path('soc/users/<str:username>/', views.user_detail_view, name='user_detail_view'),
+    path('api/chat/', views.chat_with_ai, name='chat_with_ai'),
+    path('soc/risk-detail/<int:event_id>/', views.risk_detail_view, name='risk_detail_view'),
+    path('soc/users/<str:username>/report/', views.generate_pdf_report, name='generate_pdf_report'),
+    path('soc/ai-chat/', views.ai_chat_view, name='ai_chat_view'),
 
 
 

@@ -1,0 +1,360 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Security Analyst | SentinelX SOC</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .message-enter { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .typing-indicator span { animation: blink 1.4s infinite both; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+        /* Smooth animated caret input styling */
+        .smooth-caret-wrap {
+            position: relative;
+        }
+
+        .smooth-caret-wrap input {
+            caret-color: transparent;
+        }
+
+        .smooth-caret-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 2px;
+            height: 1.1em;
+            background: #10b981;
+            /* emerald-500, matches this page's accent color */
+            border-radius: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(0, -50%);
+            transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.1s ease;
+        }
+
+        .smooth-caret-measure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            visibility: hidden;
+            white-space: pre;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <a href="/soc/dashboard/" class="text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+            <div class="flex items-center space-x-3">
+                <span class="p-2 bg-emerald-600/20 border border-emerald-500/40 rounded-lg text-emerald-500">
+                    <i class="fa-solid fa-robot text-xl"></i>
+                </span>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wider text-white flex items-center gap-2">
+                        AI Security <span class="text-emerald-500">Analyst</span>
+                        <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Online</span>
+                    </h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <span class="text-xs text-slate-400 font-mono">
+                Operator: <span class="text-emerald-400 font-bold">{{ request.user.username }}</span>
+            </span>
+            <a href="{% url 'logout' %}" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded transition">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Terminate
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Chat Container -->
+    <main class="max-w-5xl mx-auto px-4 py-6 h-[calc(100vh-80px)] flex flex-col">
+
+        <!-- Quick Actions -->
+        <div class="mb-4 flex flex-wrap gap-2">
+            <button onclick="sendQuickQuestion('How many login attempts failed today?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+                <i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i> Failed Logins Today
+            </button>
+            <button onclick="sendQuickQuestion('Which user has the most failed logins?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+                <i class="fa-solid fa-users text-blue-400 mr-1"></i> User Risk Analysis
+            </button>
+            <button onclick="sendQuickQuestion('What is the most common operating system?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+                <i class="fa-solid fa-desktop text-cyan-400 mr-1"></i> OS Statistics
+            </button>
+            <button onclick="sendQuickQuestion('How many VPN and TOR detections?')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+                <i class="fa-solid fa-network-wired text-indigo-400 mr-1"></i> VPN/TOR Stats
+            </button>
+            <button onclick="sendQuickQuestion('Show me high risk events count')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+                <i class="fa-solid fa-fire text-orange-400 mr-1"></i> High Risk Events
+            </button>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto space-y-4 p-4 bg-slate-900/50 border border-slate-800 rounded-xl mb-4 scrollbar-hide">
+            <!-- Welcome Message -->
+            <div class="message-enter flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <i class="fa-solid fa-robot text-white text-lg"></i>
+                </div>
+                <div class="max-w-[85%]">
+                    <div class="bg-slate-800 text-slate-200 text-sm p-4 rounded-2xl rounded-tl-none border border-slate-700 shadow-lg">
+                        <p class="mb-2">👋 Hello Operator! I'm <strong class="text-emerald-400">Sentinel</strong>, your AI Security Analyst.</p>
+                        <p class="text-slate-400 text-xs mb-3">I'm connected to the SentinelX database and can help you analyze security logs, user behavior, and threat data.</p>
+                        <div class="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-400">
+                            <p class="font-bold text-slate-300 mb-2">💡 Try asking me:</p>
+                            <ul class="space-y-1">
+                                <li>• "How many failed logins today?"</li>
+                                <li>• "Which user has the highest risk score?"</li>
+                                <li>• "Show me VPN detection statistics"</li>
+                                <li>• "What's the most common OS?"</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-slate-500 ml-2 mt-1 block">Just now</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+            <form id="chat-form" class="flex gap-3">
+                <div class="flex-1 relative">
+                    <div class="smooth-caret-wrap">
+                        <input type="text" id="chat-input" placeholder="Ask about security logs, users, risks, or threats..." 
+                            class="smooth-caret-input w-full bg-slate-950 border border-slate-700 text-slate-200 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition pr-10">
+                        <span class="smooth-caret-measure"></span>
+                        <div class="smooth-caret-bar"></div>
+                    </div>
+                    <i class="fa-solid fa-shield-halved text-slate-500 absolute right-3 top-1/2 -translate-y-1/2"></i>
+                </div>
+                <button type="submit" id="send-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-6 py-3 transition flex items-center gap-2 font-semibold shadow-lg shadow-emerald-900/30">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span class="hidden sm:inline">Send</span>
+                </button>
+            </form>
+            <p class="text-[10px] text-slate-500 mt-2 text-center">
+                <i class="fa-solid fa-lock mr-1"></i> AI can only answer SentinelX security-related questions
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Chat Logic -->
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const sendBtn = document.getElementById('send-btn');
+
+        // Send Quick Question
+        function sendQuickQuestion(question) {
+            chatInput.value = question;
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+
+        // Get CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Add Message to UI
+        function addMessage(text, isUser = false, timestamp = null) {
+            const now = timestamp || new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            const div = document.createElement('div');
+            div.className = 'message-enter flex items-start gap-3';
+            
+            if (isUser) {
+                div.innerHTML = `
+                    <div class="max-w-[85%] ml-auto">
+                        <div class="bg-emerald-900/30 text-emerald-100 text-sm p-4 rounded-2xl rounded-tr-none border border-emerald-800/50 shadow-lg">
+                            ${text}
+                        </div>
+                        <span class="text-[10px] text-slate-500 mr-2 mt-1 block text-right">${timeStr}</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <i class="fa-solid fa-user text-white text-lg"></i>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <i class="fa-solid fa-robot text-white text-lg"></i>
+                    </div>
+                    <div class="max-w-[85%]">
+                        <div class="bg-slate-800 text-slate-200 text-sm p-4 rounded-2xl rounded-tl-none border border-slate-700 shadow-lg">
+                            ${text}
+                        </div>
+                        <span class="text-[10px] text-slate-500 ml-2 mt-1 block">${timeStr}</span>
+                    </div>
+                `;
+            }
+            
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Show Typing Indicator
+        function showTyping() {
+            const div = document.createElement('div');
+            div.id = 'typing-indicator';
+            div.className = 'message-enter flex items-start gap-3';
+            div.innerHTML = `
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <i class="fa-solid fa-robot text-white text-lg"></i>
+                </div>
+                <div class="max-w-[85%]">
+                    <div class="bg-slate-800 text-slate-200 text-sm p-4 rounded-2xl rounded-tl-none border border-slate-700 shadow-lg">
+                        <div class="typing-indicator flex gap-1">
+                            <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                            <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                            <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Remove Typing Indicator
+        function removeTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+
+        // Send Message
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add User Message
+            addMessage(message, true);
+            chatInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+            // Show Typing
+            showTyping();
+
+            try {
+                const response = await fetch('/api/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                removeTyping();
+
+                if (response.ok) {
+                    // Convert markdown-like formatting to HTML
+                    let formattedResponse = data.ai_response
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/\n/g, '<br>');
+                    
+                    addMessage(formattedResponse, false);
+                } else {
+                    addMessage(`<span class="text-red-400">Error: ${data.error || 'Failed to connect to AI.'}</span>`, false);
+                }
+            } catch (error) {
+                removeTyping();
+                addMessage(`<span class="text-red-400">Error: Connection failed. Please try again.</span>`, false);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span class="hidden sm:inline">Send</span>';
+                chatInput.focus();
+            }
+        });
+
+        // Enter key to send
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Focus input on load
+        window.addEventListener('load', () => {
+            chatInput.focus();
+        });
+
+        // --- Smooth animated caret (vanilla JS, no framework) ---
+        document.querySelectorAll('.smooth-caret-wrap').forEach((wrap) => {
+            const input = wrap.querySelector('.smooth-caret-input');
+            const measure = wrap.querySelector('.smooth-caret-measure');
+            const bar = wrap.querySelector('.smooth-caret-bar');
+            if (!input || !measure || !bar) return;
+
+            function syncMeasureFont() {
+                const styles = window.getComputedStyle(input);
+                measure.style.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+                measure.style.letterSpacing = styles.letterSpacing;
+            }
+
+            function updateCaret() {
+                const start = input.selectionStart ?? input.value.length;
+                const end = input.selectionEnd ?? input.value.length;
+                const hasSelection = start !== end;
+                const caretIndex = start;
+                const textBeforeCaret = input.value.slice(0, caretIndex);
+
+                syncMeasureFont();
+                measure.textContent = textBeforeCaret;
+
+                const paddingLeft = parseFloat(window.getComputedStyle(input).paddingLeft) || 0;
+                const textWidth = textBeforeCaret.length > 0 ? measure.offsetWidth : 0;
+                const x = paddingLeft + textWidth - input.scrollLeft;
+
+                bar.style.transform = `translate(${x}px, -50%)`;
+                bar.style.opacity = hasSelection ? '0' : '1';
+            }
+
+            input.addEventListener('input', () => requestAnimationFrame(updateCaret));
+            input.addEventListener('click', updateCaret);
+            input.addEventListener('keyup', updateCaret);
+            input.addEventListener('focus', updateCaret);
+            input.addEventListener('scroll', updateCaret);
+            input.addEventListener('blur', () => { bar.style.opacity = '0'; });
+            document.addEventListener('selectionchange', () => {
+                if (document.activeElement === input) updateCaret();
+            });
+        });
+    </script>
+
+</body>
+</html>

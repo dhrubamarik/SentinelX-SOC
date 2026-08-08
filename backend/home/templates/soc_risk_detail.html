@@ -1,0 +1,191 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Analysis - {{ event.user.username }} | SentinelX SOC</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- Navigation -->
+    <nav class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <a href="/soc/dashboard/" class="text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+            <h1 class="text-lg font-bold text-white">Risk Analysis Detail</h1>
+        </div>
+        <a href="{% url 'logout' %}" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded transition">
+            <i class="fa-solid fa-right-from-bracket mr-1"></i> Terminate
+        </a>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
+
+        <!-- Event Header -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white">Event Risk Breakdown</h2>
+                <span class="px-3 py-1 rounded font-bold text-sm {% if event.risk_level == 'CRITICAL' %}bg-red-950 text-red-400 border border-red-800{% elif event.risk_level == 'HIGH' %}bg-orange-950 text-orange-400 border border-orange-800{% elif event.risk_level == 'MEDIUM' %}bg-amber-950 text-amber-400 border border-amber-800{% else %}bg-slate-800 text-slate-400{% endif %}">
+                    {{ event.risk_level }} ({{ event.risk_score }}/100)
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                    <span class="text-slate-500 block text-xs">User</span>
+                    <span class="text-white font-bold">{{ event.user.username|default:"Anonymous" }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-xs">Event Type</span>
+                    <span class="text-white font-bold">{{ event.event_type }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-xs">IP Address</span>
+                    <span class="text-white font-bold">{{ event.ip_address }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-xs">Timestamp</span>
+                    <span class="text-white font-bold">{{ event.created_at|date:"Y-m-d H:i:s" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Score Breakdown -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-purple-400"></i> Risk Score Breakdown
+            </h3>
+
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between text-xs mb-2">
+                    <span class="text-slate-400">Total Risk Score</span>
+                    <span class="text-white font-bold">{{ event.risk_score }}/100</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3">
+                    <div class="h-3 rounded-full {% if event.risk_score >= 80 %}bg-red-500{% elif event.risk_score >= 50 %}bg-orange-500{% elif event.risk_score >= 20 %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {{ event.risk_score }}%"></div>
+                </div>
+            </div>
+
+            <!-- Risk Reasons -->
+            {% if event.risk_reasons %}
+            <div class="space-y-3">
+                {% for reason in event.risk_reasons %}
+                <div class="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center">
+                            {% if reason.rule == 'NEW_DEVICE' %}
+                                <i class="fa-solid fa-laptop text-blue-400"></i>
+                            {% elif reason.rule == 'NEW_BROWSER' %}
+                                <i class="fa-brands fa-chrome text-green-400"></i>
+                            {% elif reason.rule == 'NEW_COUNTRY' %}
+                                <i class="fa-solid fa-earth-americas text-purple-400"></i>
+                            {% elif reason.rule == 'FAILED_LOGINS' or reason.rule == 'LOGIN_FAILED' %}
+                                <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                            {% elif reason.rule == 'VPN' %}
+                                <i class="fa-solid fa-network-wired text-indigo-400"></i>
+                            {% elif reason.rule == 'TOR' %}
+                                <i class="fa-solid fa-mask text-emerald-400"></i>
+                            {% elif reason.rule == 'UNUSUAL_LOGIN_TIME' %}
+                                <i class="fa-solid fa-clock text-amber-400"></i>
+                            {% else %}
+                                <i class="fa-solid fa-shield text-slate-400"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <!-- FIXED: Using custom replace filter -->
+                            <span class="text-white font-bold text-sm">{{ reason.rule|replace:"_, " }}</span>
+                            <p class="text-xs text-slate-500">Risk factor detected</p>
+                        </div>
+                    </div>
+                    <span class="text-red-400 font-bold text-sm">+{{ reason.score }} pts</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fa-solid fa-check-circle text-emerald-400 text-4xl mb-3"></i>
+                <p class="text-slate-400">No risk factors detected. This event is considered safe.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Detection Flags -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-tags text-blue-400"></i> Detection Flags
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <span class="text-xs text-slate-500 block">New Device</span>
+                    <span class="{% if event.is_new_device %}text-red-400{% else %}text-emerald-400{% endif %} font-bold text-sm">
+                        {% if event.is_new_device %}<i class="fa-solid fa-triangle-exclamation mr-1"></i>Yes{% else %}<i class="fa-solid fa-check mr-1"></i>No{% endif %}
+                    </span>
+                </div>
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <span class="text-xs text-slate-500 block">New Browser</span>
+                    <span class="{% if event.is_new_browser %}text-red-400{% else %}text-emerald-400{% endif %} font-bold text-sm">
+                        {% if event.is_new_browser %}<i class="fa-solid fa-triangle-exclamation mr-1"></i>Yes{% else %}<i class="fa-solid fa-check mr-1"></i>No{% endif %}
+                    </span>
+                </div>
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <span class="text-xs text-slate-500 block">New Location</span>
+                    <span class="{% if event.is_new_location %}text-red-400{% else %}text-emerald-400{% endif %} font-bold text-sm">
+                        {% if event.is_new_location %}<i class="fa-solid fa-triangle-exclamation mr-1"></i>Yes{% else %}<i class="fa-solid fa-check mr-1"></i>No{% endif %}
+                    </span>
+                </div>
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <span class="text-xs text-slate-500 block">VPN Detected</span>
+                    <span class="{% if event.is_vpn %}text-red-400{% else %}text-emerald-400{% endif %} font-bold text-sm">
+                        {% if event.is_vpn %}<i class="fa-solid fa-triangle-exclamation mr-1"></i>Yes{% else %}<i class="fa-solid fa-check mr-1"></i>No{% endif %}
+                    </span>
+                </div>
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <span class="text-xs text-slate-500 block">TOR Detected</span>
+                    <span class="{% if event.is_tor %}text-red-400{% else %}text-emerald-400{% endif %} font-bold text-sm">
+                        {% if event.is_tor %}<i class="fa-solid fa-triangle-exclamation mr-1"></i>Yes{% else %}<i class="fa-solid fa-check mr-1"></i>No{% endif %}
+                    </span>
+                </div>
+                <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                    <span class="text-xs text-slate-500 block">Unusual Time</span>
+                    <span class="{% if event.risk_reasons|contains:"UNUSUAL_LOGIN_TIME" %}text-red-400{% else %}text-emerald-400{% endif %} font-bold text-sm">
+                        {% if event.risk_reasons|contains:"UNUSUAL_LOGIN_TIME" %}<i class="fa-solid fa-triangle-exclamation mr-1"></i>Yes{% else %}<i class="fa-solid fa-check mr-1"></i>No{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Info -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-desktop text-cyan-400"></i> Device Information
+            </h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-slate-500 block text-xs">Operating System</span>
+                    <span class="text-white">{{ event.operating_system|default:"Unknown" }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-xs">Browser</span>
+                    <span class="text-white">{{ event.browser|default:"Unknown" }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-xs">Country</span>
+                    <span class="text-white">{{ event.country|default:"Unknown" }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-xs">City</span>
+                    <span class="text-white">{{ event.city|default:"Unknown" }}</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

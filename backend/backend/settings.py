@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
 
-
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-sentinelx-default-local-key-change-in-prod')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'

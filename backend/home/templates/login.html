@@ -7,6 +7,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <style>
+        /* Smooth animated caret input styling */
+        .smooth-caret-wrap {
+            position: relative;
+        }
+
+        .smooth-caret-wrap input {
+            caret-color: transparent;
+        }
+
+        .smooth-caret-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 2px;
+            height: 1.1em;
+            background: #3b82f6;
+            /* blue-500, matches focus-border accent */
+            border-radius: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(0, -50%);
+            transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.1s ease;
+        }
+
+        .smooth-caret-measure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            visibility: hidden;
+            white-space: pre;
+            pointer-events: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,14 +52,23 @@
                 <form class="text-white flex flex-col gap-4" method="post" action="{% url 'login' %}">
                     {% csrf_token %}
                     <input type="hidden" name="fingerprint_data" id="fingerprint_data">
-                    <input
-                        class="px-4 py-3 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors"
-                        type="text" placeholder="username" name="username">
+
+                    <div class="smooth-caret-wrap">
+                        <input
+                            class="smooth-caret-input px-4 py-3 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors w-full"
+                            type="text" placeholder="username" name="username">
+                        <span class="smooth-caret-measure"></span>
+                        <div class="smooth-caret-bar"></div>
+                    </div>
 
                     <div class="relative">
-                        <input id="id_password"
-                            class="w-full px-4 py-3 pr-12 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors"
-                            type="password" placeholder="password" name="password">
+                        <div class="smooth-caret-wrap">
+                            <input id="id_password"
+                                class="smooth-caret-input w-full px-4 py-3 pr-12 rounded-md bg-transparent border-2 border-zinc-700 outline-none focus:border-blue-500 transition-colors"
+                                type="password" placeholder="password" name="password">
+                            <span class="smooth-caret-measure"></span>
+                            <div class="smooth-caret-bar"></div>
+                        </div>
                         <button type="button" id="togglePassword"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors">
                             <!-- eye (show) icon -->
@@ -89,6 +132,54 @@
             passwordInput.type = isPassword ? 'text' : 'password';
             eyeIcon.classList.toggle('hidden', isPassword);
             eyeOffIcon.classList.toggle('hidden', !isPassword);
+        });
+
+        // --- Smooth animated caret (vanilla JS, no framework) ---
+        document.querySelectorAll('.smooth-caret-wrap').forEach((wrap) => {
+            const input = wrap.querySelector('.smooth-caret-input');
+            const measure = wrap.querySelector('.smooth-caret-measure');
+            const bar = wrap.querySelector('.smooth-caret-bar');
+            if (!input || !measure || !bar) return;
+
+            const PASSWORD_CHAR = '\u2022';
+
+            function syncMeasureFont() {
+                const styles = window.getComputedStyle(input);
+                measure.style.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+                measure.style.letterSpacing = styles.letterSpacing;
+            }
+
+            function updateCaret() {
+                const start = input.selectionStart ?? input.value.length;
+                const end = input.selectionEnd ?? input.value.length;
+                const hasSelection = start !== end;
+                const caretIndex = start;
+                const isPassword = input.type === 'password';
+
+                const textBeforeCaret = isPassword
+                    ? PASSWORD_CHAR.repeat(caretIndex)
+                    : input.value.slice(0, caretIndex);
+
+                syncMeasureFont();
+                measure.textContent = textBeforeCaret;
+
+                const paddingLeft = parseFloat(window.getComputedStyle(input).paddingLeft) || 0;
+                const textWidth = textBeforeCaret.length > 0 ? measure.offsetWidth : 0;
+                const x = paddingLeft + textWidth - input.scrollLeft;
+
+                bar.style.transform = `translate(${x}px, -50%)`;
+                bar.style.opacity = hasSelection ? '0' : '1';
+            }
+
+            input.addEventListener('input', () => requestAnimationFrame(updateCaret));
+            input.addEventListener('click', updateCaret);
+            input.addEventListener('keyup', updateCaret);
+            input.addEventListener('focus', updateCaret);
+            input.addEventListener('scroll', updateCaret);
+            input.addEventListener('blur', () => { bar.style.opacity = '0'; });
+            document.addEventListener('selectionchange', () => {
+                if (document.activeElement === input) updateCaret();
+            });
         });
     </script>
 </body>

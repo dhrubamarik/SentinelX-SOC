@@ -16,9 +16,14 @@
         <h1 class="text-sm font-bold uppercase tracking-wider text-white">
             User Dossier: <span class="text-emerald-400 font-mono">{{ target_user.username }}</span>
         </h1>
-        <a href="/soc/users/" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
-            &larr; Back to User Directory
-        </a>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'generate_pdf_report' target_user.username %}" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+                <i class="fa-solid fa-file-pdf mr-2"></i> Download PDF Report
+            </a>
+            <a href="/soc/users/" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+                &larr; Back to User Directory
+            </a>
+        </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">

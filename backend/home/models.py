@@ -256,3 +256,9 @@ class SecurityAlert(models.Model):
     def __str__(self):
         username = self.user.username if self.user else "System/Unknown"
         return f"[{self.severity}] {self.title} - {username}"
+
+
+
+
+
+        

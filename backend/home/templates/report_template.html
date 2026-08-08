@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #333; }
+        .header { text-align: center; border-bottom: 3px solid #dc2626; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #dc2626; margin: 0; font-size: 24px; }
+        .header p { color: #666; margin: 10px 0 0 0; font-size: 12px; }
+        .info-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .info-box h3 { margin: 0 0 10px 0; color: #dc2626; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
+        th { background: #dc2626; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .risk-low { color: #10b981; font-weight: bold; }
+        .risk-medium { color: #f59e0b; font-weight: bold; }
+        .risk-high { color: #f97316; font-weight: bold; }
+        .risk-critical { color: #dc2626; font-weight: bold; }
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 10px; color: #666; }
+        .summary { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .summary-card { background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; width: 23%; }
+        .summary-card h4 { margin: 0; color: #666; font-size: 11px; }
+        .summary-card .value { font-size: 20px; font-weight: bold; color: #dc2626; margin: 5px 0 0 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ SentinelX SOC - Security Report</h1>
+        <p>Generated: {{ generated_at|date:"Y-m-d H:i:s" }} | User: {{ target_user.username }}</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h4>Total Events</h4>
+            <p class="value">{{ total_events }}</p>
+        </div>
+        <div class="summary-card">
+            <h4>Successful Logins</h4>
+            <p class="value">{{ successful_logins }}</p>
+        </div>
+        <div class="summary-card">
+            <h4>Failed Logins</h4>
+            <p class="value">{{ failed_logins }}</p>
+        </div>
+        <div class="summary-card">
+            <h4>High Risk Events</h4>
+            <p class="value">{{ high_risk_count }}</p>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>📊 User Profile Summary</h3>
+        <p><strong>Username:</strong> {{ target_user.username }}</p>
+        <p><strong>Email:</strong> {{ target_user.email|default:"Not provided" }}</p>
+        <p><strong>Account Created:</strong> {{ target_user.date_joined|date:"Y-m-d" }}</p>
+        <p><strong>Last Login:</strong> {{ last_login|date:"Y-m-d H:i:s"|default:"Never" }}</p>
+        <p><strong>Account Status:</strong> {% if target_user.is_active %}Active{% else %}Inactive{% endif %}</p>
+    </div>
+
+    <h3>📋 Complete Login History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date/Time</th>
+                <th>Event Type</th>
+                <th>IP Address</th>
+                <th>Location</th>
+                <th>Device</th>
+                <th>Risk Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr>
+                <td>{{ event.created_at|date:"Y-m-d H:i:s" }}</td>
+                <td>{{ event.event_type }}</td>
+                <td>{{ event.ip_address }}</td>
+                <td>{{ event.city|default:"Unknown" }}, {{ event.country|default:"Unknown" }}</td>
+                <td>{{ event.operating_system|default:"Unknown" }} / {{ event.browser|default:"Unknown" }}</td>
+                <td class="risk-{{ event.risk_level|lower }}">{{ event.risk_level }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No events recorded</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="info-box">
+        <h3>⚠️ Security Alerts</h3>
+        {% if alerts %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Severity</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <td>{{ alert.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td class="risk-{{ alert.severity|lower }}">{{ alert.severity }}</td>
+                    <td>{{ alert.title }}</td>
+                    <td>{{ alert.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No security alerts generated for this user.</p>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        <p>SentinelX SOC - Intelligent Security Monitoring Platform</p>
+        <p>This report is confidential and intended for authorized personnel only.</p>
+        <p>Report ID: {{ target_user.username }}-{{ generated_at|date:"YmdHis" }}</p>
+    </div>
+</body>
+</html>
