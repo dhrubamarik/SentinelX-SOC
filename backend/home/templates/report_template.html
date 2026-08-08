@@ -3,31 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #333; }
-        .header { text-align: center; border-bottom: 3px solid #dc2626; padding-bottom: 20px; margin-bottom: 30px; }
-        .header h1 { color: #dc2626; margin: 0; font-size: 24px; }
-        .header p { color: #666; margin: 10px 0 0 0; font-size: 12px; }
-        .info-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .info-box h3 { margin: 0 0 10px 0; color: #dc2626; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
-        th { background: #dc2626; color: white; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .risk-low { color: #10b981; font-weight: bold; }
-        .risk-medium { color: #f59e0b; font-weight: bold; }
-        .risk-high { color: #f97316; font-weight: bold; }
-        .risk-critical { color: #dc2626; font-weight: bold; }
-        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 10px; color: #666; }
-        .summary { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .summary-card { background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; width: 23%; }
-        .summary-card h4 { margin: 0; color: #666; font-size: 11px; }
-        .summary-card .value { font-size: 20px; font-weight: bold; color: #dc2626; margin: 5px 0 0 0; }
+        @page {
+            margin: 30px 36px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: #1e293b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 10px;
+            margin-bottom: 28px;
+            border-bottom: 4px solid #dc2626;
+        }
+
+        .header-left h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .header-left h1 .accent {
+            color: #dc2626;
+        }
+
+        .header-left p {
+            color: #94a3b8;
+            margin: 6px 0 0 0;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right {
+            text-align: right;
+            color: #cbd5e1;
+            font-size: 10px;
+        }
+
+        .header-right .badge {
+            display: inline-block;
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+            color: #f87171;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        /* ===== Summary Cards ===== */
+        .summary {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 26px;
+        }
+
+        .summary-card {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #dc2626;
+            padding: 14px 16px;
+            border-radius: 8px;
+        }
+
+        .summary-card h4 {
+            margin: 0;
+            color: #64748b;
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 6px 0 0 0;
+        }
+
+        /* ===== Section Titles ===== */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 26px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-title .icon {
+            font-size: 15px;
+        }
+
+        /* ===== Info Box ===== */
+        .info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+        }
+
+        .info-box h3 {
+            margin: 0 0 12px 0;
+            color: #0f172a;
+            font-size: 13.5px;
+            font-weight: 700;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 6px 0;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 12px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row .label {
+            width: 160px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .info-row .val {
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        .status-active {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .status-inactive {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        /* ===== Tables ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 22px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 11px;
+        }
+
+        th {
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 9.5px;
+            letter-spacing: 0.4px;
+        }
+
+        td {
+            border-bottom: 1px solid #eef2f7;
+            color: #334155;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        /* ===== Risk Pills ===== */
+        .risk-low {
+            display: inline-block;
+            color: #059669;
+            background: #d1fae5;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+        }
+
+        .risk-medium {
+            display: inline-block;
+            color: #b45309;
+            background: #fef3c7;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+        }
+
+        .risk-high {
+            display: inline-block;
+            color: #c2410c;
+            background: #ffedd5;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+        }
+
+        .risk-critical {
+            display: inline-block;
+            color: #b91c1c;
+            background: #fee2e2;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #94a3b8;
+            font-style: italic;
+            padding: 18px 0;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            text-align: center;
+            margin-top: 36px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer p {
+            font-size: 9.5px;
+            color: #94a3b8;
+            margin: 3px 0;
+        }
+
+        .footer .brand {
+            font-weight: 700;
+            color: #dc2626;
+        }
+
+        .footer .confidential {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: #64748b;
+        }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <h1>🛡️ SentinelX SOC - Security Report</h1>
-        <p>Generated: {{ generated_at|date:"Y-m-d H:i:s" }} | User: {{ target_user.username }}</p>
+        <div class="header-left">
+            <h1>🛡️ Sentinel<span class="accent">X</span> SOC</h1>
+            <p>Security Operations Center &mdash; Full Investigation Report</p>
+        </div>
+        <div class="header-right">
+            <div class="badge">Confidential</div><br>
+            Generated: {{ generated_at|date:"Y-m-d H:i:s" }}<br>
+            Subject: {{ target_user.username }}
+        </div>
     </div>
 
     <div class="summary">
@@ -51,14 +313,31 @@
 
     <div class="info-box">
         <h3>📊 User Profile Summary</h3>
-        <p><strong>Username:</strong> {{ target_user.username }}</p>
-        <p><strong>Email:</strong> {{ target_user.email|default:"Not provided" }}</p>
-        <p><strong>Account Created:</strong> {{ target_user.date_joined|date:"Y-m-d" }}</p>
-        <p><strong>Last Login:</strong> {{ last_login|date:"Y-m-d H:i:s"|default:"Never" }}</p>
-        <p><strong>Account Status:</strong> {% if target_user.is_active %}Active{% else %}Inactive{% endif %}</p>
+        <div class="info-row">
+            <span class="label">Username</span>
+            <span class="val">{{ target_user.username }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Email</span>
+            <span class="val">{{ target_user.email|default:"Not provided" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Account Created</span>
+            <span class="val">{{ target_user.date_joined|date:"Y-m-d" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Last Login</span>
+            <span class="val">{{ last_login|date:"Y-m-d H:i:s"|default:"Never" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Account Status</span>
+            <span class="val {% if target_user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                {% if target_user.is_active %}● Active{% else %}● Inactive{% endif %}
+            </span>
+        </div>
     </div>
 
-    <h3>📋 Complete Login History</h3>
+    <div class="section-title"><span class="icon">📋</span> Complete Login History</div>
     <table>
         <thead>
             <tr>
@@ -78,11 +357,11 @@
                 <td>{{ event.ip_address }}</td>
                 <td>{{ event.city|default:"Unknown" }}, {{ event.country|default:"Unknown" }}</td>
                 <td>{{ event.operating_system|default:"Unknown" }} / {{ event.browser|default:"Unknown" }}</td>
-                <td class="risk-{{ event.risk_level|lower }}">{{ event.risk_level }}</td>
+                <td><span class="risk-{{ event.risk_level|lower }}">{{ event.risk_level }}</span></td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="text-align: center;">No events recorded</td>
+                <td colspan="6" class="no-data">No events recorded</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -104,7 +383,7 @@
                 {% for alert in alerts %}
                 <tr>
                     <td>{{ alert.created_at|date:"Y-m-d H:i:s" }}</td>
-                    <td class="risk-{{ alert.severity|lower }}">{{ alert.severity }}</td>
+                    <td><span class="risk-{{ alert.severity|lower }}">{{ alert.severity }}</span></td>
                     <td>{{ alert.title }}</td>
                     <td>{{ alert.status }}</td>
                 </tr>
@@ -112,14 +391,16 @@
             </tbody>
         </table>
         {% else %}
-        <p>No security alerts generated for this user.</p>
+        <p class="no-data">No security alerts generated for this user.</p>
         {% endif %}
     </div>
 
     <div class="footer">
-        <p>SentinelX SOC - Intelligent Security Monitoring Platform</p>
-        <p>This report is confidential and intended for authorized personnel only.</p>
+        <p class="brand">SentinelX SOC</p>
+        <p>Intelligent Security Monitoring Platform</p>
+        <p class="confidential">This report is confidential and intended for authorized personnel only</p>
         <p>Report ID: {{ target_user.username }}-{{ generated_at|date:"YmdHis" }}</p>
     </div>
+
 </body>
 </html>

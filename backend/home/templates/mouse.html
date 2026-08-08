@@ -1,0 +1,169 @@
+<!--
+  Full-Screen Mouse Follow (Spring Physics) — Vanilla JS/CSS
+  =============================================================
+  Site-wide cursor-follow dot that tracks the mouse across the ENTIRE
+  viewport on every page, not just inside a box.
+
+  HOW TO INCLUDE ON EVERY PAGE (Django):
+  1. Save as templates/partials/mouse_follow.html
+  2. Add this ONE line just before </body> in your base template
+     (e.g. base.html, or paste into each page if you don't have one):
+        {% include "partials/mouse_follow.html" %}
+  3. Done — it auto-attaches to the whole window, no extra markup needed
+     on the page itself.
+
+  Notes:
+  - pointer-events: none on the overlay + dot means it NEVER intercepts
+    clicks, hovers, or form focus — safe to drop on login, dashboard,
+    chat pages, anywhere.
+  - z-index is high (9999) so it renders above content but you can still
+    click through it because of pointer-events: none.
+  - Hidden automatically on touch-only devices (no mouse to follow).
+-->
+
+<style>
+    /* Hide the default OS cursor everywhere on the page — the animated dot
+       becomes the only cursor. Applied to html + body + * so it wins over
+       any cursor:pointer set on buttons/links elsewhere in your CSS. */
+    html,
+    body,
+    * {
+        cursor: none !important;
+    }
+
+    #mouse-follow-overlay {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        overflow: hidden;
+    }
+
+    #mouse-follow-dot {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 14px;
+        height: 14px;
+        border-radius: 9999px;
+        background: #dc143c;
+        /* crimson red — swap for another accent if you like, e.g. #ef4444 (red-500) */
+        box-shadow: 0 0 12px 2px rgba(220, 20, 60, 0.6);
+        /* soft red glow for a "deluxe" feel */
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+        transform: translate(-50%, -50%) scale(0);
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+
+        /* No real mouse (touch devices) — restore the native cursor/tap
+           behavior and don't show the dot, since there's no pointer to follow */
+        html,
+        body,
+        * {
+            cursor: auto !important;
+        }
+
+        #mouse-follow-overlay {
+            display: none;
+        }
+    }
+</style>
+
+<div id="mouse-follow-overlay">
+    <div id="mouse-follow-dot"></div>
+</div>
+
+<script>
+    (function () {
+        const overlay = document.getElementById('mouse-follow-overlay');
+        const dot = document.getElementById('mouse-follow-dot');
+        if (!overlay || !dot) return;
+
+        // Spring config — same feel as the original Framer Motion version.
+        // mass: lower = snappier | damping: higher = less bounce | stiffness: higher = faster pull
+        const SPRING = { mass: 0.1, damping: 10, stiffness: 131 };
+
+        function createSpring(initial, config) {
+            let value = initial;
+            let velocity = 0;
+            let target = initial;
+            return {
+                set(v) { target = v; },
+                // Jump instantly to a value with no spring animation (used once,
+                // on the very first mouse move, so the dot doesn't fly in from
+                // the center of the screen).
+                jumpTo(v) { value = v; target = v; velocity = 0; },
+                step(dt) {
+                    const force = -config.stiffness * (value - target);
+                    const damping = -config.damping * velocity;
+                    const acceleration = (force + damping) / config.mass;
+                    velocity += acceleration * dt;
+                    value += velocity * dt;
+                    return value;
+                }
+            };
+        }
+
+        const xSpring = createSpring(window.innerWidth / 2, SPRING);
+        const ySpring = createSpring(window.innerHeight / 2, SPRING);
+        const opacitySpring = createSpring(0, SPRING);
+        const scaleSpring = createSpring(0, SPRING);
+
+        let lastTime = performance.now();
+        let visible = false;
+
+        function tick(now) {
+            const dt = Math.min((now - lastTime) / 1000, 1 / 30); // clamp for tab-switch/jank
+            lastTime = now;
+
+            const x = xSpring.step(dt);
+            const y = ySpring.step(dt);
+            const o = opacitySpring.step(dt);
+            const s = scaleSpring.step(dt);
+
+            dot.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+            dot.style.opacity = o;
+
+            requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+
+        // Track pointer across the ENTIRE window, not a bounded container.
+        window.addEventListener('pointermove', (e) => {
+            xSpring.set(e.clientX);
+            ySpring.set(e.clientY);
+
+            if (!visible) {
+                // First movement: snap the dot straight to the cursor instead of
+                // springing in from the center of the screen (since the real
+                // cursor is now hidden, there should be no visible "jump").
+                xSpring.jumpTo(e.clientX);
+                ySpring.jumpTo(e.clientY);
+                visible = true;
+                opacitySpring.set(1);
+                scaleSpring.set(1);
+            }
+        });
+
+        // Hide when the cursor leaves the browser viewport entirely
+        // (e.g. moves to another window/taskbar).
+        document.addEventListener('mouseleave', () => {
+            visible = false;
+            opacitySpring.set(0);
+            scaleSpring.set(0);
+        });
+
+        document.addEventListener('mouseenter', () => {
+            if (!visible) {
+                visible = true;
+                opacitySpring.set(1);
+                scaleSpring.set(1);
+            }
+        });
+    })();
+</script>

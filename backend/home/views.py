@@ -16,6 +16,7 @@ from django.template.loader import render_to_string
 # ✅ ADD THESE IMPORTS FOR TIMEZONE CONVERSION
 from zoneinfo import ZoneInfo
 from datetime import timedelta
+from django.db.models import Count
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -99,10 +100,38 @@ def loginuser(request):
 
 
 def welcome(request):
+    """Welcome page after login with crowd animation"""
     if not request.user.is_authenticated:
         messages.warning(request, "Please login first")
         return redirect('/login/')
-    return render(request, 'welcome.html')
+    
+    # Get user's login count
+    user_login_count = SecurityEvent.objects.filter(
+        user=request.user,
+        event_type='LOGIN_SUCCESS'
+    ).count()
+    
+    # Get total users
+    total_users = User.objects.count()
+    
+    # Get total events
+    total_events = SecurityEvent.objects.count()
+    
+    # Get active users (logged in last 24 hours)
+    active_threshold = timezone.now() - timedelta(hours=24)
+    active_users = SecurityEvent.objects.filter(
+        created_at__gte=active_threshold
+    ).values('user').distinct().count()
+    
+    context = {
+        'user': request.user,
+        'user_login_count': user_login_count,
+        'total_users': total_users,
+        'total_events': total_events,
+        'active_users': active_users,
+    }
+    
+    return render(request, 'welcome.html', context)
 
 
 from django.contrib.messages import get_messages

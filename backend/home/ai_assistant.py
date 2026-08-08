@@ -71,6 +71,35 @@ def get_failed_logins_by_date_range(days_back=1):
     
     return f"Failed logins from {start_date} to {end_date}: {count}"
 
+def get_all_login_history_today():
+    """Gets ALL login events (success + failed) for today."""
+    today = timezone.now().date()
+    
+    # ✅ Get total counts FIRST (before slicing)
+    total_count = SecurityEvent.objects.filter(created_at__date=today).count()
+    success_count = SecurityEvent.objects.filter(
+        created_at__date=today, 
+        event_type='LOGIN_SUCCESS'
+    ).count()
+    failed_count = SecurityEvent.objects.filter(
+        created_at__date=today, 
+        event_type='LOGIN_FAILED'
+    ).count()
+    
+    # ✅ Then get the sliced events for display
+    events = SecurityEvent.objects.filter(
+        created_at__date=today
+    ).select_related('user').order_by('-created_at')[:50]
+    
+    if events:
+        event_list = []
+        for ev in events[:20]:  # Show first 20 in summary
+            username = ev.user.username if ev.user else "Unknown"
+            event_list.append(f"{username}: {ev.event_type} from {ev.ip_address}")
+        
+        return f"Total login events today: {total_count} (Success: {success_count}, Failed: {failed_count}). Recent events: {' | '.join(event_list[:10])}"
+    return f"No login events recorded today. (Success: {success_count}, Failed: {failed_count})"
+
 def get_top_os():
     """Finds the OS with the most events."""
     top_os = SecurityEvent.objects.values('operating_system').annotate(
@@ -102,11 +131,9 @@ def get_total_users():
 def get_user_login_history(username, limit=10):
     """Gets login history for a specific user (CASE-INSENSITIVE)."""
     try:
-        # ✅ FIX: Case-insensitive lookup
         user = User.objects.get(username__iexact=username)
         actual_username = user.username
         
-        # Get user's events
         events = SecurityEvent.objects.filter(
             user=user
         ).order_by('-created_at')[:limit]
@@ -256,7 +283,7 @@ THREAT_DESCRIPTIONS = {
 }
 
 # ===========================
-# FIX: Enhanced Stop Words (including typos)
+# FIX: Enhanced Stop Words (including "full", "all", and more)
 # ===========================
 
 STOP_WORDS = {
@@ -274,16 +301,19 @@ STOP_WORDS = {
     'status', 'count', 'total', 'list', 'alert', 'alerts', 'user', 'users',
     'login', 'logins', 'failed', 'risk', 'today', 'yesterday', 'week', 'month',
     'history', 'record', 'records', 'data', 'info', 'information',
+    # ✅ NEW: Words that should NEVER be usernames
+    'full', 'complete', 'entire', 'whole', 'every', 'everything',
+    'show', 'display', 'view', 'get', 'give', 'tell', 'fetch', 'retrieve',
     # ✅ TYPOS of common words
-    'whcih', 'whihc', 'wihch', 'whci', 'wchich',  # which typos
-    'waht', 'whta', 'wha', 'wht',  # what typos
-    'whe', 'wneh', 'wehn',  # when typos
-    'wre', 'weer', 'wa',  # were/was typos
-    'hsa', 'ahs',  # has typos
-    'tje', 'teh', 'ht',  # the typos
-    'nad', 'adn',  # and typos
-    'yo', 'uoy',  # you typos
-    'rn', 'no',  # no typos
+    'whcih', 'whihc', 'wihch', 'whci', 'wchich',
+    'waht', 'whta', 'wha', 'wht',
+    'whe', 'wneh', 'wehn',
+    'wre', 'weer', 'wa',
+    'hsa', 'ahs',
+    'tje', 'teh', 'ht',
+    'nad', 'adn',
+    'yo', 'uoy',
+    'rn', 'no',
 }
 
 # ✅ Valid username pattern (alphanumeric, underscore, 3-30 chars, must start with letter)
@@ -300,15 +330,12 @@ def is_valid_username(word):
     """Check if a word looks like a valid username (not a stop word)."""
     word_lower = word.lower().strip()
     
-    # Reject if empty or too short
     if not word_lower or len(word_lower) < 2:
         return False
     
-    # Reject if it's a stop word (including typos)
     if word_lower in STOP_WORDS:
         return False
     
-    # Reject if it doesn't match username pattern
     if not USERNAME_PATTERN.match(word_lower):
         return False
     
@@ -320,28 +347,28 @@ def extract_username_from_query(query_lower):
     Returns the username if found, None otherwise.
     """
     
-    # ✅ Pattern 1: "user Raj" or "user 'Raj'" or "user \"Raj\""
+    # Pattern 1: "user Raj" or "user 'Raj'" or "user \"Raj\""
     match = re.search(r'user\s+[\'"]?([a-zA-Z][a-zA-Z0-9_]+)[\'"]?', query_lower)
     if match:
         candidate = match.group(1)
         if is_valid_username(candidate):
             return candidate
     
-    # ✅ Pattern 2: "for Raj" (username after 'for')
+    # Pattern 2: "for Raj" (username after 'for')
     match = re.search(r'for\s+([a-zA-Z][a-zA-Z0-9_]+)', query_lower)
     if match:
         candidate = match.group(1)
         if is_valid_username(candidate):
             return candidate
     
-    # ✅ Pattern 3: "Raj's" (possessive)
+    # Pattern 3: "Raj's" (possessive)
     match = re.search(r'([a-zA-Z][a-zA-Z0-9_]+)\'s', query_lower)
     if match:
         candidate = match.group(1)
         if is_valid_username(candidate):
             return candidate
     
-    # ✅ Pattern 4: "Raj login" or "Raj history" (username BEFORE keyword)
+    # Pattern 4: "Raj login" or "Raj history" (username BEFORE keyword)
     for keyword in USERNAME_BEFORE_KEYWORDS:
         pattern = r'([a-zA-Z][a-zA-Z0-9_]+)\s+' + keyword
         match = re.search(pattern, query_lower)
@@ -350,8 +377,7 @@ def extract_username_from_query(query_lower):
             if is_valid_username(candidate):
                 return candidate
     
-    # ✅ Pattern 5: Check if query starts with potential username followed by action
-    # E.g., "Raj login history", "admin status"
+    # Pattern 5: Check if query starts with potential username followed by action
     words = query_lower.split()
     if len(words) >= 2:
         first_word = re.sub(r'[^\w]', '', words[0])
@@ -360,11 +386,10 @@ def extract_username_from_query(query_lower):
         if is_valid_username(first_word) and second_word in USERNAME_BEFORE_KEYWORDS:
             return first_word
     
-    # ✅ Pattern 6: Standalone capitalized word at end (for queries like "show Raj")
+    # Pattern 6: Standalone capitalized word at end (for queries like "show Raj")
     if len(words) >= 2:
         last_word = re.sub(r'[^\w]', '', words[-1])
         if is_valid_username(last_word) and last_word.lower() not in STOP_WORDS:
-            # Only if query contains user-related keywords
             if any(kw in query_lower for kw in ['user', 'status', 'account', 'show', 'get', 'check']):
                 return last_word
     
@@ -373,14 +398,18 @@ def extract_username_from_query(query_lower):
 def detect_query_intent(query_lower):
     """
     Detect what the user is asking for.
-    Returns: 'login_history', 'user_status', 'failed_logins', 'alerts', 'most_failed', 'general'
+    Returns: 'login_history', 'user_status', 'failed_logins', 'alerts', 'most_failed', 'all_login_history', 'general'
     """
     
     # ✅ "Which user has most failed" pattern
     if ('which user' in query_lower or 'who has' in query_lower) and 'most' in query_lower and 'failed' in query_lower:
         return 'most_failed'
     
-    # ✅ Login history
+    # ✅ ALL/FULL login history (system-wide, not user-specific)
+    if ('full' in query_lower or 'all' in query_lower or 'complete' in query_lower or 'entire' in query_lower) and 'login' in query_lower and 'history' in query_lower:
+        return 'all_login_history'
+    
+    # ✅ Login history (user-specific)
     if 'history' in query_lower or 'login history' in query_lower or 'logins' in query_lower:
         return 'login_history'
     
@@ -424,10 +453,11 @@ def get_context_from_query(user_query, request_session=None):
     if event_match:
         context['event_id'] = event_match.group(1)
     
-    # Extract username using improved logic
-    username = extract_username_from_query(query_lower)
-    if username:
-        context['username'] = username
+    # ✅ Only extract username if intent is NOT system-wide
+    if context['intent'] not in ['all_login_history', 'most_failed']:
+        username = extract_username_from_query(query_lower)
+        if username:
+            context['username'] = username
     
     # Check session for last viewed item
     if request_session:
@@ -572,7 +602,7 @@ def get_ai_response(user_query, request_session=None):
             return data_context
     
     elif context['username']:
-        # ✅ Use intent to determine what data to fetch
+        # Use intent to determine what data to fetch
         if context['intent'] == 'login_history':
             data_context = get_user_login_history(context['username'])
         elif context['intent'] == 'user_status':
@@ -581,16 +611,19 @@ def get_ai_response(user_query, request_session=None):
             data_context = get_user_alerts(context['username'])
         elif context['intent'] == 'failed_logins':
             data_context = get_user_failed_logins(context['username'])
-        elif context['intent'] == 'most_failed':
-            data_context = get_failed_logins_by_user()
         else:
-            # Default to login history for general user queries
             data_context = get_user_login_history(context['username'])
         
         if "does NOT exist" in data_context:
             return data_context
     
-    # Handle general queries (no specific username)
+    # ✅ Handle system-wide queries (NO username required)
+    elif context['intent'] == 'all_login_history':
+        if 'today' in query_lower:
+            data_context = get_all_login_history_today()
+        else:
+            data_context = get_all_login_history_today()
+    
     elif context['intent'] == 'most_failed':
         data_context = get_failed_logins_by_user()
     
@@ -655,7 +688,7 @@ def _format_ai_response(data_context, user_query, api_key, detectable_threats_st
  DATA CONTEXT (from database):
 {data_context}
 
-🎯 ALLOWED THREAT TYPES (SentinelX Detection Engine):
+ ALLOWED THREAT TYPES (SentinelX Detection Engine):
 {detectable_threats_str or "Brute Force, VPN, TOR, New Device, New Browser, New Country, Unusual Login Time, Impossible Travel"}
 
 📋 THREAT DESCRIPTIONS:

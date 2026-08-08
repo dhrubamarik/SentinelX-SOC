@@ -7,6 +7,84 @@
     
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hide the default OS cursor everywhere on the page — the animated dot
+           becomes the only cursor. */
+        html,
+        body,
+        * {
+            cursor: none !important;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse 900px 500px at 10% -10%, rgba(59, 130, 246, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 700px 500px at 100% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 55%);
+            background-color: #020617;
+            background-attachment: fixed;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.55); }
+
+        #mouse-follow-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        #mouse-follow-dot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background: #3b82f6;
+            box-shadow: 0 0 12px 2px rgba(59, 130, 246, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            html,
+            body,
+            * {
+                cursor: auto !important;
+            }
+
+            #mouse-follow-overlay {
+                display: none;
+            }
+        }
+
+        /* Back button hover */
+        .back-btn {
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 6px 16px -8px rgba(59, 130, 246, 0.5);
+            color: #ffffff;
+        }
+
+        /* Table card hover */
+        .table-card {
+            transition: border-color 0.28s ease, box-shadow 0.28s ease;
+        }
+        .table-card:hover {
+            border-color: rgba(59, 130, 246, 0.20);
+        }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
 
@@ -14,13 +92,13 @@
         <h1 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
             <i class="fa-solid fa-users text-blue-400"></i> User Management Dashboard
         </h1>
-        <a href="/soc/dashboard/" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+        <a href="/soc/dashboard/" class="back-btn text-xs bg-slate-800 px-3 py-1.5 rounded border border-slate-700">
             &larr; Main Dashboard
         </a>
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-8">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+        <div class="table-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-950 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
                     <tr>
@@ -58,5 +136,88 @@
         </div>
     </main>
 
+    <!-- Custom Mouse Follow Cursor -->
+    <div id="mouse-follow-overlay">
+        <div id="mouse-follow-dot"></div>
+    </div>
+
+    <script>
+        (function () {
+            const overlay = document.getElementById('mouse-follow-overlay');
+            const dot = document.getElementById('mouse-follow-dot');
+            if (!overlay || !dot) return;
+
+            const SPRING = { mass: 0.1, damping: 10, stiffness: 131 };
+
+            function createSpring(initial, config) {
+                let value = initial;
+                let velocity = 0;
+                let target = initial;
+                return {
+                    set(v) { target = v; },
+                    jumpTo(v) { value = v; target = v; velocity = 0; },
+                    step(dt) {
+                        const force = -config.stiffness * (value - target);
+                        const damping = -config.damping * velocity;
+                        const acceleration = (force + damping) / config.mass;
+                        velocity += acceleration * dt;
+                        value += velocity * dt;
+                        return value;
+                    }
+                };
+            }
+
+            const xSpring = createSpring(window.innerWidth / 2, SPRING);
+            const ySpring = createSpring(window.innerHeight / 2, SPRING);
+            const opacitySpring = createSpring(0, SPRING);
+            const scaleSpring = createSpring(0, SPRING);
+
+            let lastTime = performance.now();
+            let visible = false;
+
+            function tick(now) {
+                const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+                lastTime = now;
+
+                const x = xSpring.step(dt);
+                const y = ySpring.step(dt);
+                const o = opacitySpring.step(dt);
+                const s = scaleSpring.step(dt);
+
+                dot.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+                dot.style.opacity = o;
+
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+
+            window.addEventListener('pointermove', (e) => {
+                xSpring.set(e.clientX);
+                ySpring.set(e.clientY);
+
+                if (!visible) {
+                    xSpring.jumpTo(e.clientX);
+                    ySpring.jumpTo(e.clientY);
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                visible = false;
+                opacitySpring.set(0);
+                scaleSpring.set(0);
+            });
+
+            document.addEventListener('mouseenter', () => {
+                if (!visible) {
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

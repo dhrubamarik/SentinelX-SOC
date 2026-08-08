@@ -3,24 +3,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SentinelX SOC - User Dossier: {{ target_user.username }}</title>
+    <title>SentinelX SOC - User: {{ target_user.username }}</title>
     
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* Hide the default OS cursor everywhere on the page */
+        html,
+        body,
+        * {
+            cursor: none !important;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse 900px 500px at 10% -10%, rgba(59, 130, 246, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 700px 500px at 100% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 55%);
+            background-color: #020617;
+            background-attachment: fixed;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.55); }
+
+        #mouse-follow-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        #mouse-follow-dot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background: #3b82f6;
+            box-shadow: 0 0 12px 2px rgba(59, 130, 246, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            html,
+            body,
+            * {
+                cursor: auto !important;
+            }
+
+            #mouse-follow-overlay {
+                display: none;
+            }
+        }
+
+        /* Back button hover */
+        .back-btn {
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 6px 16px -8px rgba(59, 130, 246, 0.5);
+        }
+
+        /* PDF report button hover */
+        .pdf-btn {
+            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .pdf-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px -8px rgba(220, 38, 38, 0.55);
+        }
+
+        /* Card hover effect */
+        .stat-card {
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                        border-color 0.28s ease,
+                        box-shadow 0.28s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: 
+                0 12px 28px -12px rgba(59, 130, 246, 0.30),
+                0 0 16px -4px rgba(59, 130, 246, 0.15);
+        }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
 
     <header class="border-b border-slate-800 bg-slate-900 px-6 py-3.5 flex justify-between items-center">
         <h1 class="text-sm font-bold uppercase tracking-wider text-white">
-            User Dossier: <span class="text-emerald-400 font-mono">{{ target_user.username }}</span>
+            User: <span class="text-blue-400 font-mono">{{ target_user.username }}</span>
         </h1>
         <div class="flex items-center gap-3">
-            <a href="{% url 'generate_pdf_report' target_user.username %}" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+            <a href="{% url 'generate_pdf_report' target_user.username %}" class="pdf-btn bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">
                 <i class="fa-solid fa-file-pdf mr-2"></i> Download PDF Report
             </a>
-            <a href="/soc/users/" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+            <a href="/soc/users/" class="back-btn text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
                 &larr; Back to User Directory
             </a>
         </div>
@@ -30,15 +121,15 @@
         
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <div class="stat-card bg-slate-900 border border-slate-800 rounded-xl p-5">
                 <span class="text-xs font-bold text-slate-400 uppercase">Successful Logins</span>
                 <div class="text-3xl font-extrabold text-emerald-400 mt-1">{{ total_logins }}</div>
             </div>
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <div class="stat-card bg-slate-900 border border-slate-800 rounded-xl p-5">
                 <span class="text-xs font-bold text-slate-400 uppercase">Failed Attempts</span>
                 <div class="text-3xl font-extrabold text-red-500 mt-1">{{ failed_logins }}</div>
             </div>
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <div class="stat-card bg-slate-900 border border-slate-800 rounded-xl p-5">
                 <span class="text-xs font-bold text-slate-400 uppercase">Registered Email</span>
                 <div class="text-sm font-mono text-white mt-2">{{ target_user.email|default:"Not Provided" }}</div>
             </div>
@@ -55,7 +146,7 @@
         <!-- Detailed Extracted Telemetry Log -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <i class="fa-solid fa-database text-purple-400"></i> Extracted Login Telemetry History
+                <i class="fa-solid fa-database text-blue-400"></i> Extracted Login Telemetry History
             </h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -72,7 +163,7 @@
                     <tbody class="divide-y divide-slate-800/60 font-mono">
                         {% for ev in events %}
                             <tr class="hover:bg-slate-800/50">
-                                <td class="p-3 font-bold {% if ev.event_type == 'LOGIN_SUCCESS' %}text-emerald-400{% else %}text-red-400{% endif %}">
+                                <td class="p-3 font-bold {% if ev.event_type == 'LOGIN_SUCCESS' %}text-emerald-400{% elif ev.event_type == 'LOGIN_FAILED' %}text-red-500{% else %}text-blue-400{% endif %}">
                                     {{ ev.event_type }}
                                 </td>
                                 <td class="p-3">
@@ -85,7 +176,7 @@
                                 </td>
                                 <td class="p-3">
                                     {% if ev.is_vpn %}<span class="text-indigo-400 font-bold">VPN</span>{% endif %}
-                                    {% if ev.is_tor %}<span class="text-emerald-400 font-bold ml-1">TOR</span>{% endif %}
+                                    {% if ev.is_tor %}<span class="text-blue-400 font-bold ml-1">TOR</span>{% endif %}
                                     {% if not ev.is_vpn and not ev.is_tor %}<span class="text-slate-500">Direct Connection</span>{% endif %}
                                 </td>
                                 <td class="p-3">
@@ -105,6 +196,11 @@
         </div>
 
     </main>
+
+    <!-- Custom Mouse Follow Cursor -->
+    <div id="mouse-follow-overlay">
+        <div id="mouse-follow-dot"></div>
+    </div>
 
     <script>
         const locations = {{ location_history|safe }};
@@ -131,6 +227,85 @@
         } else {
             document.getElementById('user-map').innerHTML = '<div class="flex items-center justify-center h-full text-xs text-slate-500">No map coordinates logged for this user.</div>';
         }
+    </script>
+
+    <script>
+        (function () {
+            const overlay = document.getElementById('mouse-follow-overlay');
+            const dot = document.getElementById('mouse-follow-dot');
+            if (!overlay || !dot) return;
+
+            const SPRING = { mass: 0.1, damping: 10, stiffness: 131 };
+
+            function createSpring(initial, config) {
+                let value = initial;
+                let velocity = 0;
+                let target = initial;
+                return {
+                    set(v) { target = v; },
+                    jumpTo(v) { value = v; target = v; velocity = 0; },
+                    step(dt) {
+                        const force = -config.stiffness * (value - target);
+                        const damping = -config.damping * velocity;
+                        const acceleration = (force + damping) / config.mass;
+                        velocity += acceleration * dt;
+                        value += velocity * dt;
+                        return value;
+                    }
+                };
+            }
+
+            const xSpring = createSpring(window.innerWidth / 2, SPRING);
+            const ySpring = createSpring(window.innerHeight / 2, SPRING);
+            const opacitySpring = createSpring(0, SPRING);
+            const scaleSpring = createSpring(0, SPRING);
+
+            let lastTime = performance.now();
+            let visible = false;
+
+            function tick(now) {
+                const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+                lastTime = now;
+
+                const x = xSpring.step(dt);
+                const y = ySpring.step(dt);
+                const o = opacitySpring.step(dt);
+                const s = scaleSpring.step(dt);
+
+                dot.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+                dot.style.opacity = o;
+
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+
+            window.addEventListener('pointermove', (e) => {
+                xSpring.set(e.clientX);
+                ySpring.set(e.clientY);
+
+                if (!visible) {
+                    xSpring.jumpTo(e.clientX);
+                    ySpring.jumpTo(e.clientY);
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                visible = false;
+                opacitySpring.set(0);
+                scaleSpring.set(0);
+            });
+
+            document.addEventListener('mouseenter', () => {
+                if (!visible) {
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+        })();
     </script>
 </body>
 </html>

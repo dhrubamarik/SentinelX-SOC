@@ -5,55 +5,566 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SentinelX SOC</title>
-    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <title>SentinelX SOC - Intelligent Security Monitoring Platform</title>
+    
+    <!-- Google Fonts: Sora -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#0a0a0a',
+                        foreground: '#fafafa',
+                        primary: '#dc2626',
+                        'primary-hover': '#b91c1c',
+                        muted: '#1a1a1a',
+                        'muted-border': '#262626',
+                    },
+                    fontFamily: {
+                        sans: ['Sora', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Sora', sans-serif;
+            background-color: #0a0a0a;
+            color: #fafafa;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Subtle grid background */
+        .hero-bg {
+            background: 
+                radial-gradient(ellipse at top, rgba(220, 38, 38, 0.18) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(220, 38, 38, 0.06) 0%, transparent 50%),
+                #0a0a0a;
+        }
+        
+        /* Subtle dotted pattern for sections */
+        .dotted-bg {
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #dc262640; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #dc262680; }
+        
+        /* Simple hover */
+        .card-hover {
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+        .card-hover:hover {
+            border-color: rgba(220, 38, 38, 0.45);
+            transform: translateY(-2px);
+        }
+        
+        .btn-hover {
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .btn-hover:active {
+            transform: scale(0.98);
+        }
+
+        /* Pulsing live-alert dot for SOC feel */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .pulse-dot {
+            animation: pulse-red 1.8s infinite;
+        }
+    </style>
 </head>
 
-<body class="bg-zinc-900 text-white font-sans">
-    <div class="w-full min-h-screen flex flex-col">
+<body class="antialiased min-h-screen">
 
-        <!-- Navigation Bar -->
-        <nav class="w-full flex items-center justify-between px-8 py-4 border-b border-zinc-800">
-            <div class="flex items-center gap-2">
-                <span class="text-red-500 font-bold text-xl">SentinelX</span>
-                <span class="text-zinc-500 text-xs font-medium uppercase tracking-wide">SOC</span>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <a href="{% url 'login' %}"
-                   class="px-4 py-2 text-sm text-zinc-300 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors">
-                    Log In
-                </a>
-                <a href="{% url 'register' %}"
-                   class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-                    Register
-                </a>
-            </div>
-        </nav>
-
-        <!-- Hero Section -->
-        <main class="flex-1 flex flex-col items-center justify-center px-6 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                Welcome to <span class="text-red-500">SentinelX</span>
-            </h1>
-
-            <p class="text-zinc-400 text-base md:text-lg max-w-lg mb-8">
-                Monitor authentication events, detect suspicious activity, and investigate
-                security incidents in real time.
-            </p>
-
-            <a href="{% url 'soc_login' %}"
-               class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-                Access SOC Portal
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 lg:px-16 py-4 bg-black/70 backdrop-blur-md border-b border-white/5">
+        <div class="flex items-center space-x-2">
+            <a href="#home" class="text-white text-xl font-bold tracking-tight flex items-center">
+                <i class="fa-solid fa-shield-halved text-primary mr-2"></i>
+                SENTINEL<span class="text-primary">X</span>
             </a>
-        </main>
-
-        <!-- Footer -->
-        <footer class="w-full py-5 border-t border-zinc-800 text-center text-xs text-zinc-500">
-            &copy; {% now "Y" %} SentinelX SOC Platform. All rights reserved.
-        </footer>
-
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-8">
+            <a href="#home" class="text-sm text-white/80 hover:text-primary transition-colors uppercase tracking-wider">Home</a>
+            <a href="#how-it-works" class="text-sm text-white/80 hover:text-primary transition-colors uppercase tracking-wider">How It Works</a>
+            <a href="#features" class="text-sm text-white/80 hover:text-primary transition-colors uppercase tracking-wider">Features</a>
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-4">
+            <a href="{% url 'login' %}" class="text-sm text-white/80 hover:text-primary transition-colors uppercase tracking-wider">Login</a>
+            <a href="{% url 'register' %}" class="text-sm text-white bg-white/10 hover:bg-white/20 transition-all rounded-lg uppercase text-xs tracking-wider px-5 py-2 font-medium border border-white/10">Register</a>
+            <a href="{% url 'soc_login' %}" class="text-sm text-black bg-primary hover:bg-primary-hover transition-all rounded-lg uppercase text-xs tracking-wider px-5 py-2 font-bold btn-hover">SOC Login</a>
+        </div>
+        
+        <button id="mobile-menu-btn" class="md:hidden text-white hover:text-primary transition-colors">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="fixed top-0 left-0 w-full h-full bg-black/95 backdrop-blur-lg z-[60] hidden">
+        <div class="flex flex-col items-center justify-center h-full space-y-8">
+            <button id="mobile-menu-close" class="absolute top-6 right-6 text-white hover:text-primary transition-colors">
+                <i class="fa-solid fa-xmark text-3xl"></i>
+            </button>
+            <a href="#home" class="text-lg text-white/90 hover:text-primary transition-colors uppercase tracking-wider mobile-link">Home</a>
+            <a href="#how-it-works" class="text-lg text-white/90 hover:text-primary transition-colors uppercase tracking-wider mobile-link">How It Works</a>
+            <a href="#features" class="text-lg text-white/90 hover:text-primary transition-colors uppercase tracking-wider mobile-link">Features</a>
+            
+            <div class="flex flex-col space-y-4 pt-8">
+                <a href="{% url 'login' %}" class="text-lg text-white/90 hover:text-primary transition-colors uppercase tracking-wider text-center">Login</a>
+                <a href="{% url 'register' %}" class="text-lg text-white bg-white/10 hover:bg-white/20 transition-all rounded-lg uppercase text-sm tracking-wider px-8 py-3 font-medium border border-white/10 text-center">Register</a>
+                <a href="{% url 'soc_login' %}" class="text-lg text-black bg-primary hover:bg-primary-hover transition-all rounded-lg uppercase text-sm tracking-wider px-8 py-3 font-bold btn-hover text-center">SOC Login</a>
+            </div>
+        </div>
     </div>
-</body>
 
+    <!-- Hero Section -->
+    <section id="home" class="hero-bg relative min-h-screen flex items-end overflow-hidden pt-20">
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-16 pb-20 md:pb-28">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center space-x-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+                    <span class="w-2 h-2 bg-primary rounded-full pulse-dot"></span>
+                    <span class="text-xs text-white/70 uppercase tracking-wider">AI-Powered Security Monitoring</span>
+                </div>
+                
+                <h1 class="text-5xl md:text-7xl font-bold leading-[1.05] tracking-tight text-white mb-6">
+                    SENTINEL<span class="text-primary">X</span><br>
+                    <span class="text-white/60 font-light text-3xl md:text-5xl">Intelligent Security Operations Center</span>
+                </h1>
+                
+                <p class="text-white/70 text-lg md:text-xl font-light mb-10 max-w-2xl leading-relaxed">
+                    Enterprise security monitoring built in days. AI-powered threat detection deployed with zero-trust architecture. Real-time alerts, risk scoring, and incident investigation — all done right.
+                </p>
+                
+                <div class="flex flex-wrap gap-4">
+                    <a href="{% url 'soc_login' %}" class="bg-primary text-black px-8 py-4 text-sm rounded-lg cursor-pointer hover:bg-primary-hover transition-all btn-hover font-bold flex items-center">
+                        Try SOC Platform <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </a>
+                    <a href="#how-it-works" class="bg-white/5 text-white border border-white/10 px-8 py-4 text-sm rounded-lg cursor-pointer hover:bg-white/10 transition-all btn-hover font-medium">
+                        How It Works
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-8 mt-12 pt-8 border-t border-white/5">
+                    <div>
+                        <p class="text-2xl font-bold text-white">24/7</p>
+                        <p class="text-xs text-white/50 uppercase tracking-wider">Monitoring</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-white">Real-time</p>
+                        <p class="text-xs text-white/50 uppercase tracking-wider">Threat Detection</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-white">Zero-Trust</p>
+                        <p class="text-xs text-white/50 uppercase tracking-wider">Architecture</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+            <a href="#how-it-works" class="flex flex-col items-center text-white/40 hover:text-primary transition-colors">
+                <span class="text-xs uppercase tracking-widest mb-2">Scroll</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="dotted-bg relative py-24 px-6 md:px-16">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-primary text-xs uppercase tracking-widest font-semibold">Process</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mt-3 mb-4">
+                    How It <span class="text-primary">Works</span>
+                </h2>
+                <p class="text-white/60 text-lg max-w-xl mx-auto">
+                    Four simple steps to enterprise-grade security monitoring
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <span class="text-primary text-xl font-bold">1</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Register Account</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Create your user account in seconds. Get instant access to basic security monitoring features.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <span class="text-primary text-xl font-bold">2</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Login & Track</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Every login is tracked automatically. Device fingerprinting, geo-location, and risk scoring in real-time.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <span class="text-primary text-xl font-bold">3</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">AI Threat Detection</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        AI analyzes patterns, detects anomalies, and generates alerts for suspicious activity automatically.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <span class="text-primary text-xl font-bold">4</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">SOC Dashboard</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Access the admin panel for advanced monitoring, incident investigation, and AI-powered queries.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-14">
+                <a href="{% url 'register' %}" class="inline-block bg-primary text-black px-8 py-4 text-sm rounded-lg hover:bg-primary-hover transition-all btn-hover font-bold">
+                    Get Started Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="relative py-24 px-6 md:px-16 bg-black/40">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-primary text-xs uppercase tracking-widest font-semibold">Capabilities</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mt-3 mb-4">
+                    Platform <span class="text-primary">Features</span>
+                </h2>
+                <p class="text-white/60 text-lg max-w-xl mx-auto">
+                    Everything you need for comprehensive security monitoring
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <i class="fa-solid fa-shield-halved text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Real-Time Monitoring</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Live telemetry feed showing all authentication events with instant risk scoring as they happen.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <i class="fa-solid fa-robot text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">AI Security Analyst</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Natural language queries to ask about failed logins, user risk, VPN detections, and more.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <i class="fa-solid fa-triangle-exclamation text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Smart Alerts</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Automated alert generation for high-risk events with severity levels and status tracking.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <i class="fa-solid fa-earth-americas text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Threat Map</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Interactive global map showing login locations with risk-colored markers in real-time.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <i class="fa-solid fa-chart-line text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Analytics Dashboard</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Visual charts for daily volume, risk distribution, OS usage, and geographic data.
+                    </p>
+                </div>
+                
+                <div class="card-hover bg-white/[0.02] border border-white/10 rounded-xl p-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                        <i class="fa-solid fa-file-pdf text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">PDF Reports</h3>
+                    <p class="text-white/60 text-sm leading-relaxed">
+                        Generate professional PDF reports for user login history with accurate timestamps.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="relative py-24 px-6 md:px-16">
+        <div class="max-w-4xl mx-auto text-center bg-white/[0.02] border border-white/10 rounded-2xl p-12 md:p-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Secure Your Platform?</h2>
+            <p class="text-white/60 text-lg mb-8 max-w-2xl mx-auto">
+                Start monitoring your security events in minutes. No credit card required.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="{% url 'register' %}" class="bg-primary text-black px-8 py-4 text-sm rounded-lg hover:bg-primary-hover transition-all btn-hover font-bold">
+                    Create Free Account
+                </a>
+                <a href="{% url 'soc_login' %}" class="bg-white/5 text-white border border-white/10 px-8 py-4 text-sm rounded-lg hover:bg-white/10 transition-all btn-hover font-medium">
+                    SOC Admin Login
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 py-12 px-6 md:px-16 bg-black">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa-solid fa-shield-halved text-primary text-xl"></i>
+                        <span class="text-white text-lg font-bold tracking-tight">
+                            SENTINEL<span class="text-primary">X</span>
+                        </span>
+                    </div>
+                    <p class="text-white/50 text-sm max-w-md leading-relaxed">
+                        Intelligent Security Operations Center platform for enterprise-grade threat detection and monitoring.
+                    </p>
+                    
+                    <div class="flex space-x-3 mt-6">
+                        <a href="https://www.linkedin.com/in/dhruba-marik-4a6a3933b/" target="_blank" class="w-9 h-9 bg-white/5 hover:bg-primary rounded-lg flex items-center justify-center text-white/60 hover:text-black transition-all border border-white/5">
+                            <i class="fa-brands fa-linkedin-in text-sm"></i>
+                        </a>
+                        <a href="https://www.instagram.com/dhruba.ff/" target="_blank" class="w-9 h-9 bg-white/5 hover:bg-primary rounded-lg flex items-center justify-center text-white/60 hover:text-black transition-all border border-white/5">
+                            <i class="fa-brands fa-instagram text-sm"></i>
+                        </a>
+                        <a href="https://github.com/dhrubamarik" target="_blank" class="w-9 h-9 bg-white/5 hover:bg-primary rounded-lg flex items-center justify-center text-white/60 hover:text-black transition-all border border-white/5">
+                            <i class="fa-brands fa-github text-sm"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4 uppercase text-xs tracking-widest">Navigation</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-white/50 hover:text-primary transition-colors text-sm">Home</a></li>
+                        <li><a href="#how-it-works" class="text-white/50 hover:text-primary transition-colors text-sm">How It Works</a></li>
+                        <li><a href="#features" class="text-white/50 hover:text-primary transition-colors text-sm">Features</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4 uppercase text-xs tracking-widest">Account</h4>
+                    <ul class="space-y-3">
+                        <li><a href="{% url 'login' %}" class="text-white/50 hover:text-primary transition-colors text-sm">User Login</a></li>
+                        <li><a href="{% url 'register' %}" class="text-white/50 hover:text-primary transition-colors text-sm">Register</a></li>
+                        <li><a href="{% url 'soc_login' %}" class="text-white/50 hover:text-primary transition-colors text-sm">SOC Admin</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-white/40 text-xs mb-4 md:mb-0">
+                    © 2026 SentinelX SOC. All rights reserved.
+                </p>
+                <p class="text-white/40 text-xs">
+                    Built with <i class="fa-solid fa-heart text-primary mx-1"></i> by Dhruba Marik
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Full-Screen Mouse Follow (Spring Physics) -->
+    <style>
+        /* Hide the default OS cursor everywhere on the page */
+        html,
+        body,
+        * {
+            cursor: none !important;
+        }
+
+        #mouse-follow-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        #mouse-follow-dot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background: #ef4444; /* Red color matching SOC theme */
+            box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.6); /* Red glow */
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            /* No real mouse (touch devices) — restore the native cursor */
+            html,
+            body,
+            * {
+                cursor: auto !important;
+            }
+
+            #mouse-follow-overlay {
+                display: none;
+            }
+        }
+    </style>
+
+    <div id="mouse-follow-overlay">
+        <div id="mouse-follow-dot"></div>
+    </div>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        mobileMenuClose.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        });
+        
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            });
+        });
+
+        // Mouse Follow Effect
+        (function () {
+            const overlay = document.getElementById('mouse-follow-overlay');
+            const dot = document.getElementById('mouse-follow-dot');
+            if (!overlay || !dot) return;
+
+            const SPRING = { mass: 0.1, damping: 10, stiffness: 131 };
+
+            function createSpring(initial, config) {
+                let value = initial;
+                let velocity = 0;
+                let target = initial;
+                return {
+                    set(v) { target = v; },
+                    jumpTo(v) { value = v; target = v; velocity = 0; },
+                    step(dt) {
+                        const force = -config.stiffness * (value - target);
+                        const damping = -config.damping * velocity;
+                        const acceleration = (force + damping) / config.mass;
+                        velocity += acceleration * dt;
+                        value += velocity * dt;
+                        return value;
+                    }
+                };
+            }
+
+            const xSpring = createSpring(window.innerWidth / 2, SPRING);
+            const ySpring = createSpring(window.innerHeight / 2, SPRING);
+            const opacitySpring = createSpring(0, SPRING);
+            const scaleSpring = createSpring(0, SPRING);
+
+            let lastTime = performance.now();
+            let visible = false;
+
+            function tick(now) {
+                const dt = Math.min((now - lastTime) / 1000, 1 / 30); 
+                lastTime = now;
+
+                const x = xSpring.step(dt);
+                const y = ySpring.step(dt);
+                const o = opacitySpring.step(dt);
+                const s = scaleSpring.step(dt);
+
+                dot.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+                dot.style.opacity = o;
+
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+
+            window.addEventListener('pointermove', (e) => {
+                xSpring.set(e.clientX);
+                ySpring.set(e.clientY);
+
+                if (!visible) {
+                    xSpring.jumpTo(e.clientX);
+                    ySpring.jumpTo(e.clientY);
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                visible = false;
+                opacitySpring.set(0);
+                scaleSpring.set(0);
+            });
+
+            document.addEventListener('mouseenter', () => {
+                if (!visible) {
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+        })();
+    </script>
+
+</body>
 </html>

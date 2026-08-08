@@ -9,6 +9,141 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hide the default OS cursor everywhere on the page — the animated dot
+           becomes the only cursor. Applied to html + body + * so it wins over
+           any cursor:pointer set elsewhere. */
+        html,
+        body,
+        * {
+            cursor: none !important;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse 900px 500px at 10% -10%, rgba(59, 130, 246, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 700px 500px at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 55%);
+            background-color: #020617;
+            background-attachment: fixed;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.55); }
+
+        #mouse-follow-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        #mouse-follow-dot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background: #3b82f6;
+            /* blue */
+            box-shadow: 0 0 12px 2px rgba(59, 130, 246, 0.6);
+            /* soft blue glow */
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+
+            /* No real mouse (touch devices) — restore native cursor/tap
+               behavior and hide the dot */
+            html,
+            body,
+            * {
+                cursor: auto !important;
+            }
+
+            #mouse-follow-overlay {
+                display: none;
+            }
+        }
+
+        /* ---------- Stylish additions (visual only) ---------- */
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .anim-in {
+            animation: fadeSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        /* Header logo icon hover */
+        .header-icon {
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease;
+        }
+        .header-icon:hover {
+            transform: scale(1.12) rotate(-4deg);
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+
+        /* Back button hover */
+        .back-btn {
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-3px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 6px 16px -8px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Chart card hover treatment - Blue Glow */
+        .chart-card {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                        border-color 0.28s ease,
+                        box-shadow 0.28s ease;
+        }
+        .chart-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(59,130,246,0), rgba(59,130,246,0.5), rgba(59,130,246,0));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.28s ease;
+            pointer-events: none;
+        }
+        .chart-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: 
+                0 16px 34px -16px rgba(59, 130, 246, 0.45),
+                0 0 24px -6px rgba(59, 130, 246, 0.20),
+                0 0 0 1px rgba(59, 130, 246, 0.06);
+        }
+        .chart-card:hover::before {
+            opacity: 1;
+        }
+        .chart-card .chart-title-icon {
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), filter 0.28s ease;
+        }
+        .chart-card:hover .chart-title-icon {
+            transform: scale(1.2) rotate(-4deg);
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+    </style>
 </head>
 
 <body class="bg-slate-950 text-white min-h-screen font-sans">
@@ -16,11 +151,11 @@
     <!-- Header Navigation -->
     <header class="border-b border-slate-800 bg-slate-900 px-6 py-3.5 flex justify-between items-center">
         <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-chart-line text-blue-400 text-xl"></i>
+            <i class="header-icon fa-solid fa-chart-line text-blue-400 text-xl"></i>
             <h1 class="text-sm font-bold uppercase tracking-wider text-white">Security Telemetry Analytics</h1>
         </div>
         <a href="/soc/dashboard/"
-            class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
+            class="back-btn text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
             &larr; Back to Dashboard
         </a>
     </header>
@@ -29,9 +164,9 @@
     <main class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Chart 1: Login Trend -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="chart-card anim-in bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg" style="animation-delay: 0.02s;">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-arrow-trend-up text-emerald-400"></i> Daily Auth Event Volume
+                <i class="chart-title-icon fa-solid fa-arrow-trend-up text-emerald-400"></i> Daily Auth Event Volume
             </h2>
             <div class="relative h-64">
                 <canvas id="trendChart"></canvas>
@@ -39,9 +174,9 @@
         </div>
 
         <!-- Chart 2: Risk Distribution -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="chart-card anim-in bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg" style="animation-delay: 0.08s;">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-amber-400"></i> Event Risk Severity Breakdown
+                <i class="chart-title-icon fa-solid fa-chart-pie text-amber-400"></i> Event Risk Severity Breakdown
             </h2>
             <div class="relative h-64 flex justify-center">
                 <canvas id="riskChart"></canvas>
@@ -49,9 +184,9 @@
         </div>
 
         <!-- Chart 3: Top Browsers -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="chart-card anim-in bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg" style="animation-delay: 0.14s;">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-compass text-cyan-400"></i> Client Agent Distribution
+                <i class="chart-title-icon fa-solid fa-compass text-cyan-400"></i> Client Agent Distribution
             </h2>
             <div class="relative h-64">
                 <canvas id="browserChart"></canvas>
@@ -59,9 +194,9 @@
         </div>
 
         <!-- Chart 4: Top Countries -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="chart-card anim-in bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg" style="animation-delay: 0.20s;">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-globe text-purple-400"></i> Top Origin Geographic Regions
+                <i class="chart-title-icon fa-solid fa-globe text-purple-400"></i> Top Origin Geographic Regions
             </h2>
             <div class="relative h-64">
                 <canvas id="countryChart"></canvas>
@@ -69,6 +204,11 @@
         </div>
 
     </main>
+
+    <!-- Custom Mouse Follow Cursor -->
+    <div id="mouse-follow-overlay">
+        <div id="mouse-follow-dot"></div>
+    </div>
 
     <!-- Fetch & Render Charts -->
     <script>
@@ -156,6 +296,86 @@
             .catch(error => {
                 console.error('Error fetching or rendering analytics chart data:', error);
             });
+    </script>
+
+    <script>
+        (function () {
+            const overlay = document.getElementById('mouse-follow-overlay');
+            const dot = document.getElementById('mouse-follow-dot');
+            if (!overlay || !dot) return;
+
+            // Spring config — mass: lower = snappier | damping: higher = less bounce | stiffness: higher = faster pull
+            const SPRING = { mass: 0.1, damping: 10, stiffness: 131 };
+
+            function createSpring(initial, config) {
+                let value = initial;
+                let velocity = 0;
+                let target = initial;
+                return {
+                    set(v) { target = v; },
+                    jumpTo(v) { value = v; target = v; velocity = 0; },
+                    step(dt) {
+                        const force = -config.stiffness * (value - target);
+                        const damping = -config.damping * velocity;
+                        const acceleration = (force + damping) / config.mass;
+                        velocity += acceleration * dt;
+                        value += velocity * dt;
+                        return value;
+                    }
+                };
+            }
+
+            const xSpring = createSpring(window.innerWidth / 2, SPRING);
+            const ySpring = createSpring(window.innerHeight / 2, SPRING);
+            const opacitySpring = createSpring(0, SPRING);
+            const scaleSpring = createSpring(0, SPRING);
+
+            let lastTime = performance.now();
+            let visible = false;
+
+            function tick(now) {
+                const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+                lastTime = now;
+
+                const x = xSpring.step(dt);
+                const y = ySpring.step(dt);
+                const o = opacitySpring.step(dt);
+                const s = scaleSpring.step(dt);
+
+                dot.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+                dot.style.opacity = o;
+
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+
+            window.addEventListener('pointermove', (e) => {
+                xSpring.set(e.clientX);
+                ySpring.set(e.clientY);
+
+                if (!visible) {
+                    xSpring.jumpTo(e.clientX);
+                    ySpring.jumpTo(e.clientY);
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                visible = false;
+                opacitySpring.set(0);
+                scaleSpring.set(0);
+            });
+
+            document.addEventListener('mouseenter', () => {
+                if (!visible) {
+                    visible = true;
+                    opacitySpring.set(1);
+                    scaleSpring.set(1);
+                }
+            });
+        })();
     </script>
 </body>
 
